@@ -400,6 +400,15 @@
             });
         };
         
+        // Format date for short display (for Excel headers)
+        const formatDateForShortDisplay = (dateStr) => {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('id-ID', { 
+                day: 'numeric',
+                month: 'numeric'
+            });
+        };
+        
         // Set default dates
         document.getElementById('attendance-date').value = formatDateForInput(today);
         document.getElementById('start-date').value = formatDateForInput(new Date(today.getFullYear(), today.getMonth(), 1));
@@ -871,61 +880,70 @@
             // Create a workbook
             let csvContent = "data:text/csv;charset=utf-8,";
             
-            // Get all dates in the range for column headers
-            const dateHeaders = [];
+            // Get all dates in the range
+            const dates = [];
             for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-                dateHeaders.push(formatDateForInput(d));
+                dates.push(formatDateForInput(d));
             }
             
-            // Add headers for the Excel export
-            const baseHeaders = ["No", "NIS", "Nama Siswa", "Hadir", "Sakit", "Ijin", "Alpha"];
+            // Create headers with dates
+            const headers = ["No", "Nama Siswa"];
+            dates.forEach(date => {
+                headers.push(formatDateForShortDisplay(date));
+            });
             
-            // Include detailed attendance for each date
-            const headers = [...baseHeaders, ...dateHeaders.map(date => formatDateForDisplay(date))];
             csvContent += headers.join(',') + "\r\n";
             
-            // Add rows
+            // Add rows for each student
             students.forEach((student, index) => {
-                let hadir = 0, sakit = 0, ijin = 0, alpha = 0;
-                const dateStatuses = [];
+                const row = [
+                    index + 1,
+                    student.name
+                ];
                 
-                // Calculate attendance counts and collect status for each date
-                for (const dateStr of dateHeaders) {
-                    let status = '';
-                    let notes = '';
+                // Add status code for each date
+                dates.forEach(dateStr => {
+                    let statusCode = "-";
                     
                     if (attendance[dateStr] && attendance[dateStr][student.id]) {
                         const attendanceData = attendance[dateStr][student.id];
-                        status = typeof attendanceData === 'object' ? attendanceData.status : attendanceData;
-                        notes = typeof attendanceData === 'object' ? attendanceData.notes : '';
+                        const status = typeof attendanceData === 'object' ? attendanceData.status : attendanceData;
+                        const notes = typeof attendanceData === 'object' ? attendanceData.notes : '';
                         
-                        if (status === 'hadir') hadir++;
-                        else if (status === 'sakit') sakit++;
-                        else if (status === 'ijin') ijin++;
-                        else if (status === 'alpha') alpha++;
-                    } else {
-                        status = '-'; // No attendance recorded
+                        // Convert status to single letter code
+                        switch(status) {
+                            case 'hadir':
+                                statusCode = "H";
+                                break;
+                            case 'sakit':
+                                statusCode = "S";
+                                break;
+                            case 'ijin':
+                                statusCode = "I";
+                                break;
+                            case 'alpha':
+                                statusCode = "A";
+                                break;
+                        }
+                        
+                        // Add notes in parentheses if available
+                        if (notes) {
+                            statusCode += ` (${notes})`;
+                        }
                     }
                     
-                    // Include notes in the status if available
-                    const statusText = notes ? `${status} (${notes})` : status;
-                    dateStatuses.push(statusText);
-                }
-                
-                // Create row with attendance counts and daily status
-                const row = [
-                    index + 1,
-                    student.nis,
-                    student.name,
-                    hadir,
-                    sakit,
-                    ijin,
-                    alpha,
-                    ...dateStatuses
-                ];
+                    row.push(statusCode);
+                });
                 
                 csvContent += row.join(',') + "\r\n";
             });
+            
+            // Add summary row for each status type
+            csvContent += "\r\n";
+            csvContent += "Keterangan:,H = Hadir\r\n";
+            csvContent += ",S = Sakit\r\n";
+            csvContent += ",I = Ijin\r\n";
+            csvContent += ",A = Alpha\r\n";
             
             // Create a download link
             const encodedUri = encodeURI(csvContent);
@@ -1004,5 +1022,5 @@
             5: { status: 'hadir', notes: '' }
         };
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9631116332e040ea',t:'MTc1MzE2NzY5OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9631347fb013cdfa',t:'MTc1MzE2OTEzNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

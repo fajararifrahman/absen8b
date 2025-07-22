@@ -1,0 +1,973 @@
+
+<?php
+// Start session for flash messages
+session_start();
+
+// File paths for data storage
+$siswaFile = 'data/siswa.json';
+$kehadiranFile = 'data/kehadiran.json';
+
+// Create data directory if it doesn't exist
+if (!file_exists('data')) {
+    mkdir('data', 0777, true);
+}
+
+// Initialize or load student data
+if (!file_exists($siswaFile)) {
+    $dataSiswa = [
+        ['id' => 1, 'nis' => '2023001', 'nama' => 'Ahmad Fauzi', 'jenisKelamin' => 'Laki-laki'],
+        ['id' => 2, 'nis' => '2023002', 'nama' => 'Budi Santoso', 'jenisKelamin' => 'Laki-laki'],
+        ['id' => 3, 'nis' => '2023003', 'nama' => 'Citra Dewi', 'jenisKelamin' => 'Perempuan'],
+        ['id' => 4, 'nis' => '2023004', 'nama' => 'Dian Purnama', 'jenisKelamin' => 'Perempuan'],
+        ['id' => 5, 'nis' => '2023005', 'nama' => 'Eko Prasetyo', 'jenisKelamin' => 'Laki-laki']
+    ];
+    file_put_contents($siswaFile, json_encode($dataSiswa, JSON_PRETTY_PRINT));
+} else {
+    $dataSiswa = json_decode(file_get_contents($siswaFile), true);
+}
+
+// Initialize or load attendance data
+if (!file_exists($kehadiranFile)) {
+    $dataKehadiran = [
+        '2023-09-01' => [
+            '2023001' => 'hadir',
+            '2023002' => 'hadir',
+            '2023003' => 'sakit',
+            '2023004' => 'hadir',
+            '2023005' => 'izin'
+        ],
+        '2023-09-02' => [
+            '2023001' => 'hadir',
+            '2023002' => 'alpha',
+            '2023003' => 'hadir',
+            '2023004' => 'hadir',
+            '2023005' => 'hadir'
+        ],
+        '2023-09-03' => [
+            '2023001' => 'izin',
+            '2023002' => 'hadir',
+            '2023003' => 'hadir',
+            '2023004' => 'sakit',
+            '2023005' => 'hadir'
+        ],
+        '2023-09-04' => [
+            '2023001' => 'hadir',
+            '2023002' => 'hadir',
+            '2023003' => 'hadir',
+            '2023004' => 'hadir',
+            '2023005' => 'hadir'
+        ],
+        '2023-09-05' => [
+            '2023001' => 'sakit',
+            '2023002' => 'hadir',
+            '2023003' => 'alpha',
+            '2023004' => 'hadir',
+            '2023005' => 'hadir'
+        ],
+        '2023-09-06' => [
+            '2023001' => 'hadir',
+            '2023002' => 'izin',
+            '2023003' => 'hadir',
+            '2023004' => 'hadir',
+            '2023005' => 'sakit'
+        ],
+        '2023-09-07' => [
+            '2023001' => 'hadir',
+            '2023002' => 'hadir',
+            '2023003' => 'hadir',
+            '2023004' => 'alpha',
+            '2023005' => 'hadir'
+        ]
+    ];
+    file_put_contents($kehadiranFile, json_encode($dataKehadiran, JSON_PRETTY_PRINT));
+} else {
+    $dataKehadiran = json_decode(file_get_contents($kehadiranFile), true);
+}
+
+// Handle form submissions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Add new student
+    if (isset($_POST['action']) && $_POST['action'] === 'tambah_siswa') {
+        $nis = $_POST['nis'];
+        $nama = $_POST['nama'];
+        $jenisKelamin = $_POST['jenis_kelamin'];
+        
+        // Check if NIS already exists
+        $nisExists = false;
+        foreach ($dataSiswa as $siswa) {
+            if ($siswa['nis'] === $nis) {
+                $nisExists = true;
+                break;
+            }
+        }
+        
+        if ($nisExists) {
+            $_SESSION['error'] = 'NIS sudah digunakan. Silakan gunakan NIS lain.';
+        } else {
+            // Get next ID
+            $maxId = 0;
+            foreach ($dataSiswa as $siswa) {
+                if ($siswa['id'] > $maxId) {
+                    $maxId = $siswa['id'];
+                }
+            }
+            
+            // Add new student
+            $dataSiswa[] = [
+                'id' => $maxId + 1,
+                'nis' => $nis,
+                'nama' => $nama,
+                'jenisKelamin' => $jenisKelamin
+            ];
+            
+            // Save to file
+            file_put_contents($siswaFile, json_encode($dataSiswa, JSON_PRETTY_PRINT));
+            $_SESSION['success'] = 'Siswa berhasil ditambahkan.';
+        }
+        
+        // Redirect to prevent form resubmission
+        header('Location: ' . $_SERVER['PHP_SELF']);
+        exit;
+    }
+    
+    // Delete student
+    if (isset($_POST['action']) && $_POST['action'] === 'hapus_siswa') {
+        $id = (int)$_POST['id'];
+        
+        // Find student by ID
+        $newDataSiswa = [];
+        $deletedNIS = '';
+        
+        foreach ($dataSiswa as $siswa) {
+            if ($siswa['id'] !== $id) {
+                $newDataSiswa[] = $siswa;
+            } else {
+                $deletedNIS = $siswa['nis'];
+            }
+        }
+        
+        // Update student data
+        $dataSiswa = $newDataSiswa;
+        file_put_contents($siswaFile, json_encode($dataSiswa, JSON_PRETTY_PRINT));
+        
+        // Remove attendance data for deleted student
+        if (!empty($deletedNIS)) {
+            foreach ($dataKehadiran as $tanggal => $kehadiran) {
+                if (isset($kehadiran[$deletedNIS])) {
+                    unset($dataKehadiran[$tanggal][$deletedNIS]);
+                }
+            }
+            file_put_contents($kehadiranFile, json_encode($dataKehadiran, JSON_PRETTY_PRINT));
+        }
+        
+        $_SESSION['success'] = 'Siswa berhasil dihapus.';
+        
+        // Redirect to prevent form resubmission
+        header('Location: ' . $_SERVER['PHP_SELF']);
+        exit;
+    }
+    
+    // Update attendance
+    if (isset($_POST['action']) && $_POST['action'] === 'update_kehadiran') {
+        $tanggal = $_POST['tanggal'];
+        $kehadiran = $_POST['kehadiran'];
+        
+        // Initialize date if it doesn't exist
+        if (!isset($dataKehadiran[$tanggal])) {
+            $dataKehadiran[$tanggal] = [];
+        }
+        
+        // Update attendance data
+        foreach ($kehadiran as $nis => $status) {
+            $dataKehadiran[$tanggal][$nis] = $status;
+        }
+        
+        // Save to file
+        file_put_contents($kehadiranFile, json_encode($dataKehadiran, JSON_PRETTY_PRINT));
+        $_SESSION['success'] = 'Data kehadiran berhasil disimpan.';
+        
+        // Redirect to prevent form resubmission
+        header('Location: ' . $_SERVER['PHP_SELF'] . '?tab=kehadiran&tanggal=' . $tanggal);
+        exit;
+    }
+}
+
+// Helper function to get today's date
+function getTodayDate() {
+    return date('Y-m-d');
+}
+
+// Helper function to get first day of current month
+function getFirstDayOfMonth() {
+    return date('Y-m-01');
+}
+
+// Helper function to format date to Indonesian format
+function formatDateToIndonesian($dateString) {
+    $timestamp = strtotime($dateString);
+    $dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    $monthNames = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    
+    $dayOfWeek = $dayNames[date('w', $timestamp)];
+    $day = date('d', $timestamp);
+    $month = $monthNames[date('n', $timestamp) - 1];
+    $year = date('Y', $timestamp);
+    
+    return "$dayOfWeek, $day $month $year";
+}
+
+// Helper function to get date range
+function getDateRange($startDate, $endDate) {
+    $dates = [];
+    $current = strtotime($startDate);
+    $end = strtotime($endDate);
+    
+    while ($current <= $end) {
+        $dates[] = date('Y-m-d', $current);
+        $current = strtotime('+1 day', $current);
+    }
+    
+    return $dates;
+}
+
+// Get active tab
+$activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'siswa';
+
+// Get date for attendance form
+$tanggalKehadiran = isset($_GET['tanggal']) ? $_GET['tanggal'] : getTodayDate();
+
+// Get date range for attendance summary
+$tanggalAwal = isset($_GET['tanggal_awal']) ? $_GET['tanggal_awal'] : getFirstDayOfMonth();
+$tanggalAkhir = isset($_GET['tanggal_akhir']) ? $_GET['tanggal_akhir'] : getTodayDate();
+
+// Calculate attendance summary if on rekap tab
+$rekapData = [];
+if ($activeTab === 'rekap' && isset($_GET['tampilkan_rekap'])) {
+    $dateRange = getDateRange($tanggalAwal, $tanggalAkhir);
+    
+    foreach ($dataSiswa as $index => $siswa) {
+        $hadir = 0;
+        $sakit = 0;
+        $izin = 0;
+        $alpha = 0;
+        
+        foreach ($dateRange as $date) {
+            if (isset($dataKehadiran[$date]) && isset($dataKehadiran[$date][$siswa['nis']])) {
+                $status = $dataKehadiran[$date][$siswa['nis']];
+                if ($status === 'hadir') $hadir++;
+                elseif ($status === 'sakit') $sakit++;
+                elseif ($status === 'izin') $izin++;
+                elseif ($status === 'alpha') $alpha++;
+            }
+        }
+        
+        $rekapData[] = [
+            'no' => $index + 1,
+            'nis' => $siswa['nis'],
+            'nama' => $siswa['nama'],
+            'hadir' => $hadir,
+            'sakit' => $sakit,
+            'izin' => $izin,
+            'alpha' => $alpha
+        ];
+    }
+}
+
+// Export to Excel if requested
+if (isset($_GET['export_excel']) && $activeTab === 'rekap' && !empty($rekapData)) {
+    // Set headers for Excel download
+    header('Content-Type: application/vnd.ms-excel');
+    header('Content-Disposition: attachment;filename="Rekap_Kehadiran_Kelas_8B_' . $tanggalAwal . '_sd_' . $tanggalAkhir . '.xls"');
+    header('Cache-Control: max-age=0');
+    
+    // Output Excel content
+    echo '
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta name="ProgId" content="Excel.Sheet">
+        <meta name="Generator" content="Microsoft Excel 11">
+        <style>
+            table {
+                border-collapse: collapse;
+                width: 100%;
+            }
+            th, td {
+                border: 1px solid #000000;
+                padding: 5px;
+            }
+            th {
+                background-color: #f2f2f2;
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    <body>
+        <h2>Rekap Kehadiran Siswa Kelas 8B</h2>
+        <p>Periode: ' . formatDateToIndonesian($tanggalAwal) . ' s/d ' . formatDateToIndonesian($tanggalAkhir) . '</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>NIS</th>
+                    <th>Nama Siswa</th>
+                    <th>Hadir</th>
+                    <th>Sakit</th>
+                    <th>Izin</th>
+                    <th>Alpha</th>
+                </tr>
+            </thead>
+            <tbody>';
+    
+    foreach ($rekapData as $rekap) {
+        echo '
+                <tr>
+                    <td>' . $rekap['no'] . '</td>
+                    <td>' . $rekap['nis'] . '</td>
+                    <td>' . $rekap['nama'] . '</td>
+                    <td>' . $rekap['hadir'] . '</td>
+                    <td>' . $rekap['sakit'] . '</td>
+                    <td>' . $rekap['izin'] . '</td>
+                    <td>' . $rekap['alpha'] . '</td>
+                </tr>';
+    }
+    
+    echo '
+            </tbody>
+        </table>
+    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'963065a696bf87b3',t:'MTc1MzE2MDY2NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+    </html>';
+    exit;
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Kehadiran Siswa Kelas 8B</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f0f4f8;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .status-hadir {
+            background-color: #DEF7EC;
+            color: #03543E;
+        }
+        .status-sakit {
+            background-color: #FEF3C7;
+            color: #92400E;
+        }
+        .status-izin {
+            background-color: #DBEAFE;
+            color: #1E40AF;
+        }
+        .status-alpha {
+            background-color: #FEE2E2;
+            color: #B91C1C;
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg">
+            <div class="container mx-auto px-4 py-6">
+                <h1 class="text-3xl font-bold">Sistem Kehadiran Siswa Kelas 8B</h1>
+                <p class="mt-2 text-blue-100">Pantau dan kelola kehadiran siswa dengan mudah</p>
+            </div>
+        </header>
+
+        <div class="container mx-auto px-4 py-8">
+            <!-- Flash Messages -->
+            <?php if (isset($_SESSION['success'])): ?>
+                <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6" role="alert">
+                    <p><?php echo $_SESSION['success']; ?></p>
+                </div>
+                <?php unset($_SESSION['success']); ?>
+            <?php endif; ?>
+            
+            <?php if (isset($_SESSION['error'])): ?>
+                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
+                    <p><?php echo $_SESSION['error']; ?></p>
+                </div>
+                <?php unset($_SESSION['error']); ?>
+            <?php endif; ?>
+
+            <!-- Tab Navigation -->
+            <div class="flex border-b border-gray-300 mb-6">
+                <a href="?tab=siswa" class="px-6 py-3 font-medium <?php echo $activeTab === 'siswa' ? 'text-indigo-700 border-b-2 border-indigo-700' : 'text-gray-500 hover:text-indigo-700'; ?>">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    Data Siswa
+                </a>
+                <a href="?tab=kehadiran" class="px-6 py-3 font-medium <?php echo $activeTab === 'kehadiran' ? 'text-indigo-700 border-b-2 border-indigo-700' : 'text-gray-500 hover:text-indigo-700'; ?>">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Kehadiran
+                </a>
+                <a href="?tab=rekap" class="px-6 py-3 font-medium <?php echo $activeTab === 'rekap' ? 'text-indigo-700 border-b-2 border-indigo-700' : 'text-gray-500 hover:text-indigo-700'; ?>">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Rekap Kehadiran
+                </a>
+            </div>
+
+            <!-- Tab Content -->
+            <?php if ($activeTab === 'siswa'): ?>
+                <!-- Data Siswa Tab -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-semibold text-gray-800">Daftar Siswa Kelas 8B</h2>
+                        <button type="button" onclick="document.getElementById('modal-tambah-siswa').classList.remove('hidden')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md flex items-center transition duration-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            Tambah Siswa
+                        </button>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
+                                    <th class="py-3 px-6 text-left">No</th>
+                                    <th class="py-3 px-6 text-left">NIS</th>
+                                    <th class="py-3 px-6 text-left">Nama Siswa</th>
+                                    <th class="py-3 px-6 text-left">Jenis Kelamin</th>
+                                    <th class="py-3 px-6 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($dataSiswa as $index => $siswa): ?>
+                                    <tr class="<?php echo $index % 2 === 0 ? 'bg-white' : 'bg-gray-50'; ?>">
+                                        <td class="py-3 px-6 text-left"><?php echo $index + 1; ?></td>
+                                        <td class="py-3 px-6 text-left"><?php echo $siswa['nis']; ?></td>
+                                        <td class="py-3 px-6 text-left"><?php echo $siswa['nama']; ?></td>
+                                        <td class="py-3 px-6 text-left"><?php echo $siswa['jenisKelamin']; ?></td>
+                                        <td class="py-3 px-6 text-center">
+                                            <button type="button" onclick="hapusSiswa(<?php echo $siswa['id']; ?>)" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-xs">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                                Hapus
+                                            </button>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            <?php elseif ($activeTab === 'kehadiran'): ?>
+                <!-- Kehadiran Tab -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-semibold text-gray-800">Input Kehadiran Siswa</h2>
+                        <form method="get" class="flex space-x-2">
+                            <input type="hidden" name="tab" value="kehadiran">
+                            <input type="date" name="tanggal" value="<?php echo $tanggalKehadiran; ?>" class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" onchange="this.form.submit()">
+                        </form>
+                    </div>
+                    
+                    <form method="post" action="">
+                        <input type="hidden" name="action" value="update_kehadiran">
+                        <input type="hidden" name="tanggal" value="<?php echo $tanggalKehadiran; ?>">
+                        
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white">
+                                <thead>
+                                    <tr class="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
+                                        <th class="py-3 px-6 text-left">No</th>
+                                        <th class="py-3 px-6 text-left">NIS</th>
+                                        <th class="py-3 px-6 text-left">Nama Siswa</th>
+                                        <th class="py-3 px-6 text-center">Status Kehadiran</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($dataSiswa as $index => $siswa): ?>
+                                        <?php 
+                                        $status = isset($dataKehadiran[$tanggalKehadiran]) && isset($dataKehadiran[$tanggalKehadiran][$siswa['nis']]) 
+                                            ? $dataKehadiran[$tanggalKehadiran][$siswa['nis']] 
+                                            : '';
+                                        ?>
+                                        <tr class="<?php echo $index % 2 === 0 ? 'bg-white' : 'bg-gray-50'; ?>">
+                                            <td class="py-3 px-6 text-left"><?php echo $index + 1; ?></td>
+                                            <td class="py-3 px-6 text-left"><?php echo $siswa['nis']; ?></td>
+                                            <td class="py-3 px-6 text-left"><?php echo $siswa['nama']; ?></td>
+                                            <td class="py-3 px-6 text-center">
+                                                <div class="flex justify-center space-x-2">
+                                                    <label class="inline-flex items-center">
+                                                        <input type="radio" name="kehadiran[<?php echo $siswa['nis']; ?>]" value="hadir" <?php echo $status === 'hadir' ? 'checked' : ''; ?> class="hidden">
+                                                        <span class="px-3 py-1 rounded-md text-xs cursor-pointer <?php echo $status === 'hadir' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'; ?>">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                            </svg>
+                                                            Hadir
+                                                        </span>
+                                                    </label>
+                                                    <label class="inline-flex items-center">
+                                                        <input type="radio" name="kehadiran[<?php echo $siswa['nis']; ?>]" value="sakit" <?php echo $status === 'sakit' ? 'checked' : ''; ?> class="hidden">
+                                                        <span class="px-3 py-1 rounded-md text-xs cursor-pointer <?php echo $status === 'sakit' ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'; ?>">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                            </svg>
+                                                            Sakit
+                                                        </span>
+                                                    </label>
+                                                    <label class="inline-flex items-center">
+                                                        <input type="radio" name="kehadiran[<?php echo $siswa['nis']; ?>]" value="izin" <?php echo $status === 'izin' ? 'checked' : ''; ?> class="hidden">
+                                                        <span class="px-3 py-1 rounded-md text-xs cursor-pointer <?php echo $status === 'izin' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'; ?>">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                            Izin
+                                                        </span>
+                                                    </label>
+                                                    <label class="inline-flex items-center">
+                                                        <input type="radio" name="kehadiran[<?php echo $siswa['nis']; ?>]" value="alpha" <?php echo $status === 'alpha' ? 'checked' : ''; ?> class="hidden">
+                                                        <span class="px-3 py-1 rounded-md text-xs cursor-pointer <?php echo $status === 'alpha' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700'; ?>">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                            </svg>
+                                                            Alpha
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="mt-6 text-right">
+                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md transition duration-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Simpan Kehadiran
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            <?php elseif ($activeTab === 'rekap'): ?>
+                <!-- Rekap Kehadiran Tab -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <div class="mb-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Rekap Kehadiran Siswa</h2>
+                        <form method="get" class="flex flex-wrap gap-4 items-end">
+                            <input type="hidden" name="tab" value="rekap">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Awal</label>
+                                <input type="date" name="tanggal_awal" value="<?php echo $tanggalAwal; ?>" class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Akhir</label>
+                                <input type="date" name="tanggal_akhir" value="<?php echo $tanggalAkhir; ?>" class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <button type="submit" name="tampilkan_rekap" value="1" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md transition duration-300">
+                                Tampilkan Rekap
+                            </button>
+                            <?php if (!empty($rekapData)): ?>
+                                <button type="submit" name="export_excel" value="1" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition duration-300 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                    </svg>
+                                    Export Excel
+                                </button>
+                            <?php endif; ?>
+                        </form>
+                    </div>
+                    
+                    <?php if (isset($_GET['tampilkan_rekap']) && !empty($rekapData)): ?>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <?php foreach ($rekapData as $rekap): ?>
+                                <div class="bg-white border rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300">
+                                    <div class="p-5 border-b">
+                                        <h3 class="text-lg font-semibold text-gray-800"><?php echo $rekap['nama']; ?></h3>
+                                        <p class="text-sm text-gray-500">NIS: <?php echo $rekap['nis']; ?></p>
+                                    </div>
+                                    <div class="p-5">
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div class="flex items-center">
+                                                <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </div>
+                                                <div>
+                                                    <p class="text-xs text-gray-500">Hadir</p>
+                                                    <p class="text-lg font-semibold"><?php echo $rekap['hadir']; ?></p>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <div class="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center mr-3">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                    </svg>
+                                                </div>
+                                                <div>
+                                                    <p class="text-xs text-gray-500">Sakit</p>
+                                                    <p class="text-lg font-semibold"><?php echo $rekap['sakit']; ?></p>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                </div>
+                                                <div>
+                                                    <p class="text-xs text-gray-500">Izin</p>
+                                                    <p class="text-lg font-semibold"><?php echo $rekap['izin']; ?></p>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center mr-3">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </div>
+                                                <div>
+                                                    <p class="text-xs text-gray-500">Alpha</p>
+                                                    <p class="text-lg font-semibold"><?php echo $rekap['alpha']; ?></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="px-5 py-3 bg-gray-50 text-right">
+                                        <button type="button" onclick="showDetailKehadiran('<?php echo $rekap['nis']; ?>', '<?php echo $rekap['nama']; ?>', '<?php echo $rekap['hadir']; ?>', '<?php echo $rekap['sakit']; ?>', '<?php echo $rekap['izin']; ?>', '<?php echo $rekap['alpha']; ?>')" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center justify-center w-full">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                            Lihat Detail
+                                        </button>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php elseif (isset($_GET['tampilkan_rekap']) && empty($rekapData)): ?>
+                        <div class="text-center py-8 text-gray-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <p>Tidak ada data kehadiran untuk periode yang dipilih.</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Modal Tambah Siswa -->
+    <div id="modal-tambah-siswa" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Tambah Siswa Baru</h3>
+                <button type="button" onclick="document.getElementById('modal-tambah-siswa').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form method="post" action="">
+                <input type="hidden" name="action" value="tambah_siswa">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">NIS</label>
+                    <input type="text" name="nis" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Siswa</label>
+                    <input type="text" name="nama" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Kelamin</label>
+                    <select name="jenis_kelamin" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                        <option value="">Pilih Jenis Kelamin</option>
+                        <option value="Laki-laki">Laki-laki</option>
+                        <option value="Perempuan">Perempuan</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="document.getElementById('modal-tambah-siswa').classList.add('hidden')" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition duration-300">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition duration-300">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Konfirmasi Hapus -->
+    <div id="modal-konfirmasi-hapus" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Konfirmasi Hapus</h3>
+                <button type="button" onclick="document.getElementById('modal-konfirmasi-hapus').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <p class="mb-4 text-gray-600">Apakah Anda yakin ingin menghapus siswa ini? Tindakan ini tidak dapat dibatalkan.</p>
+            <form method="post" action="" id="form-hapus-siswa">
+                <input type="hidden" name="action" value="hapus_siswa">
+                <input type="hidden" name="id" id="hapus-siswa-id" value="">
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="document.getElementById('modal-konfirmasi-hapus').classList.add('hidden')" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition duration-300">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-300">Hapus</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Detail Kehadiran -->
+    <div id="modal-detail-kehadiran" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Detail Kehadiran: <span id="detail-nama-siswa"></span></h3>
+                <button type="button" onclick="document.getElementById('modal-detail-kehadiran').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="mb-4">
+                <div class="flex flex-wrap gap-4 mb-4">
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
+                        <span class="text-sm">Hadir</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></div>
+                        <span class="text-sm">Sakit</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 rounded-full bg-blue-500 mr-2"></div>
+                        <span class="text-sm">Izin</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
+                        <span class="text-sm">Alpha</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Hadir</p>
+                            <p id="detail-hadir" class="text-xl font-semibold">0</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center mr-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Sakit</p>
+                            <p id="detail-sakit" class="text-xl font-semibold">0</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Izin</p>
+                            <p id="detail-izin" class="text-xl font-semibold">0</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center mr-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Alpha</p>
+                            <p id="detail-alpha" class="text-xl font-semibold">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <h4 class="font-medium text-gray-700 mb-3">Riwayat Kehadiran</h4>
+            <div class="overflow-y-auto max-h-96 border rounded-lg">
+                <table class="min-w-full bg-white">
+                    <thead class="sticky top-0 bg-gray-100">
+                        <tr class="text-gray-600 text-sm leading-normal">
+                            <th class="py-3 px-6 text-left">No</th>
+                            <th class="py-3 px-6 text-left">Tanggal</th>
+                            <th class="py-3 px-6 text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detail-kehadiran-list">
+                        <!-- Detail kehadiran akan ditampilkan di sini via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Function to handle student deletion
+        function hapusSiswa(id) {
+            document.getElementById('hapus-siswa-id').value = id;
+            document.getElementById('modal-konfirmasi-hapus').classList.remove('hidden');
+        }
+        
+        // Function to show attendance detail
+        function showDetailKehadiran(nis, nama, hadir, sakit, izin, alpha) {
+            document.getElementById('detail-nama-siswa').textContent = nama;
+            document.getElementById('detail-hadir').textContent = hadir;
+            document.getElementById('detail-sakit').textContent = sakit;
+            document.getElementById('detail-izin').textContent = izin;
+            document.getElementById('detail-alpha').textContent = alpha;
+            
+            // Fetch attendance details via AJAX
+            fetch('?tab=rekap&get_detail=1&nis=' + nis + '&tanggal_awal=<?php echo $tanggalAwal; ?>&tanggal_akhir=<?php echo $tanggalAkhir; ?>')
+                .then(response => response.json())
+                .then(data => {
+                    const detailList = document.getElementById('detail-kehadiran-list');
+                    detailList.innerHTML = '';
+                    
+                    if (data.length === 0) {
+                        const row = document.createElement('tr');
+                        row.className = 'border-b';
+                        row.innerHTML = `
+                            <td colspan="3" class="py-4 px-6 text-center text-gray-500">Tidak ada data kehadiran</td>
+                        `;
+                        detailList.appendChild(row);
+                    } else {
+                        data.forEach((item, index) => {
+                            let statusBadge = '';
+                            if (item.status === 'hadir') {
+                                statusBadge = '<span class="status-badge status-hadir">Hadir</span>';
+                            } else if (item.status === 'sakit') {
+                                statusBadge = '<span class="status-badge status-sakit">Sakit</span>';
+                            } else if (item.status === 'izin') {
+                                statusBadge = '<span class="status-badge status-izin">Izin</span>';
+                            } else if (item.status === 'alpha') {
+                                statusBadge = '<span class="status-badge status-alpha">Alpha</span>';
+                            }
+                            
+                            const row = document.createElement('tr');
+                            row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+                            row.innerHTML = `
+                                <td class="py-3 px-6 text-left">${index + 1}</td>
+                                <td class="py-3 px-6 text-left">${item.tanggal_formatted}</td>
+                                <td class="py-3 px-6 text-center">${statusBadge}</td>
+                            `;
+                            detailList.appendChild(row);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching attendance details:', error);
+                });
+            
+            document.getElementById('modal-detail-kehadiran').classList.remove('hidden');
+        }
+        
+        // Add event listeners for radio buttons in attendance form
+        document.addEventListener('DOMContentLoaded', function() {
+            const radioLabels = document.querySelectorAll('label.inline-flex');
+            radioLabels.forEach(label => {
+                label.addEventListener('click', function() {
+                    const input = this.querySelector('input[type="radio"]');
+                    const span = this.querySelector('span');
+                    
+                    // Remove active class from all spans in the same group
+                    const name = input.name;
+                    const group = document.querySelectorAll(`input[name="${name}"]`);
+                    group.forEach(radio => {
+                        const parentLabel = radio.closest('label');
+                        const parentSpan = parentLabel.querySelector('span');
+                        
+                        if (radio.value === 'hadir') {
+                            parentSpan.className = 'px-3 py-1 rounded-md text-xs cursor-pointer bg-gray-200 text-gray-700';
+                        } else if (radio.value === 'sakit') {
+                            parentSpan.className = 'px-3 py-1 rounded-md text-xs cursor-pointer bg-gray-200 text-gray-700';
+                        } else if (radio.value === 'izin') {
+                            parentSpan.className = 'px-3 py-1 rounded-md text-xs cursor-pointer bg-gray-200 text-gray-700';
+                        } else if (radio.value === 'alpha') {
+                            parentSpan.className = 'px-3 py-1 rounded-md text-xs cursor-pointer bg-gray-200 text-gray-700';
+                        }
+                    });
+                    
+                    // Add active class to clicked span
+                    if (input.value === 'hadir') {
+                        span.className = 'px-3 py-1 rounded-md text-xs cursor-pointer bg-green-500 text-white';
+                    } else if (input.value === 'sakit') {
+                        span.className = 'px-3 py-1 rounded-md text-xs cursor-pointer bg-yellow-500 text-white';
+                    } else if (input.value === 'izin') {
+                        span.className = 'px-3 py-1 rounded-md text-xs cursor-pointer bg-blue-500 text-white';
+                    } else if (input.value === 'alpha') {
+                        span.className = 'px-3 py-1 rounded-md text-xs cursor-pointer bg-red-500 text-white';
+                    }
+                    
+                    // Check the radio button
+                    input.checked = true;
+                });
+            });
+        });
+    </script>
+
+    <?php
+    // Handle AJAX request for attendance details
+    if (isset($_GET['get_detail']) && isset($_GET['nis'])) {
+        $nis = $_GET['nis'];
+        $tanggalAwal = $_GET['tanggal_awal'];
+        $tanggalAkhir = $_GET['tanggal_akhir'];
+        $dateRange = getDateRange($tanggalAwal, $tanggalAkhir);
+        
+        $detailData = [];
+        foreach ($dateRange as $date) {
+            if (isset($dataKehadiran[$date]) && isset($dataKehadiran[$date][$nis])) {
+                $detailData[] = [
+                    'tanggal' => $date,
+                    'tanggal_formatted' => formatDateToIndonesian($date),
+                    'status' => $dataKehadiran[$date][$nis]
+                ];
+            }
+        }
+        
+        // Sort by date (newest first)
+        usort($detailData, function($a, $b) {
+            return strtotime($b['tanggal']) - strtotime($a['tanggal']);
+        });
+        
+        header('Content-Type: application/json');
+        echo json_encode($detailData);
+        exit;
+    }
+    ?>
+</body>
+</html>

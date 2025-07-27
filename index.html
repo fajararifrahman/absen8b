@@ -3,1024 +3,1364 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Kehadiran Siswa Kelas 8B</title>
+    <title>FilmFlix - Streaming Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: #f0f4f8;
+            background-color: #0f172a;
+            color: #e2e8f0;
         }
-        .tab-content {
-            display: none;
+        
+        .film-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .tab-content.active {
-            display: block;
+        
+        .film-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
         }
-        .student-row:hover {
-            background-color: #f9fafb;
+        
+        .episode-item {
+            transition: background-color 0.2s ease;
         }
-        .status-btn {
-            transition: all 0.2s ease;
+        
+        .episode-item:hover {
+            background-color: #334155;
         }
-        .status-btn:hover {
-            transform: scale(1.05);
+        
+        .custom-video-player {
+            position: relative;
         }
-        .detail-row {
-            display: none;
+        
+        .video-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            padding: 15px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
-        .detail-row.show {
-            display: table-row;
+        
+        .custom-video-player:hover .video-controls {
+            opacity: 1;
+        }
+        
+        .progress-container {
+            height: 5px;
+            background-color: rgba(255,255,255,0.3);
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: #3b82f6;
+            border-radius: 5px;
+            width: 0;
+        }
+        
+        .control-button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 5px;
+            transition: color 0.2s ease;
+        }
+        
+        .control-button:hover {
+            color: #3b82f6;
+        }
+        
+        .volume-slider {
+            width: 80px;
+            height: 5px;
+        }
+        
+        .modal {
+            transition: opacity 0.3s ease;
+        }
+        
+        /* Admin panel styles */
+        .admin-section {
+            background-color: #1e293b;
+            border-radius: 8px;
+        }
+        
+        .upload-area {
+            border: 2px dashed #475569;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #3b82f6;
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+        
+        .progress-upload {
+            height: 6px;
+            border-radius: 3px;
+            background-color: #475569;
+        }
+        
+        .progress-upload-bar {
+            height: 100%;
+            border-radius: 3px;
+            background-color: #3b82f6;
+            width: 0;
         }
     </style>
 </head>
 <body>
-    <div class="min-h-screen">
-        <!-- Header -->
-        <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg">
-            <div class="container mx-auto px-4 py-6">
-                <div class="flex flex-col md:flex-row justify-between items-center">
-                    <div class="flex items-center mb-4 md:mb-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                        </svg>
-                        <div>
-                            <h1 class="text-2xl font-bold">Sistem Kehadiran Siswa</h1>
-                            <p class="text-blue-100">Pantau Kehadiran Siswa Kelas 8B</p>
+    <!-- Navigation -->
+    <nav class="bg-slate-800 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-film text-blue-500 text-2xl mr-2"></i>
+                        <span class="text-xl font-bold text-white">FilmFlix</span>
+                    </div>
+                    <div class="hidden md:ml-6 md:flex md:items-center md:space-x-4">
+                        <a href="#" class="text-white px-3 py-2 rounded-md text-sm font-medium" id="home-link">Home</a>
+                        <a href="#" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Series</a>
+                        <a href="#" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Movies</a>
+                        <a href="#" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">New Releases</a>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <div class="relative mx-4 lg:mx-0">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </span>
+                        <input class="block w-full pl-10 pr-3 py-2 border border-transparent rounded-md leading-5 bg-slate-700 text-gray-300 placeholder-gray-400 focus:outline-none focus:bg-white focus:text-gray-900 sm:text-sm transition duration-150 ease-in-out" placeholder="Search films...">
+                    </div>
+                    <button id="admin-button" class="ml-4 px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition duration-150 ease-in-out">
+                        Admin
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Home Page -->
+        <div id="home-page" class="block">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold mb-4">Featured Series</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <!-- Film Cards -->
+                    <div class="film-card bg-slate-800 rounded-lg overflow-hidden shadow-lg cursor-pointer" data-id="1">
+                        <div class="relative pb-2/3 h-64">
+                            <svg class="absolute h-full w-full object-cover" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="100" height="100" fill="#334155"/>
+                                <text x="50%" y="50%" font-size="12" fill="#94a3b8" text-anchor="middle" dominant-baseline="middle">Stranger Things</text>
+                                <circle cx="30" cy="30" r="10" fill="#3b82f6"/>
+                                <rect x="60" y="20" width="25" height="20" fill="#6366f1"/>
+                                <path d="M20,70 Q50,50 80,70" stroke="#ef4444" stroke-width="3" fill="none"/>
+                            </svg>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="text-lg font-semibold">Stranger Things</h3>
+                            <p class="text-sm text-gray-400">Sci-Fi, Horror • 4 Seasons</p>
+                            <div class="flex items-center mt-2">
+                                <span class="text-yellow-400"><i class="fas fa-star"></i></span>
+                                <span class="ml-1 text-sm">4.8/5</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="flex space-x-2">
-                        <span id="current-date" class="bg-white bg-opacity-20 px-4 py-2 rounded-lg text-sm"></span>
+
+                    <div class="film-card bg-slate-800 rounded-lg overflow-hidden shadow-lg cursor-pointer" data-id="2">
+                        <div class="relative pb-2/3 h-64">
+                            <svg class="absolute h-full w-full object-cover" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="100" height="100" fill="#334155"/>
+                                <text x="50%" y="50%" font-size="12" fill="#94a3b8" text-anchor="middle" dominant-baseline="middle">Breaking Bad</text>
+                                <rect x="25" y="25" width="50" height="30" fill="#22c55e"/>
+                                <circle cx="50" cy="70" r="15" fill="#eab308"/>
+                                <path d="M20,40 L80,40" stroke="#f97316" stroke-width="3"/>
+                            </svg>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="text-lg font-semibold">Breaking Bad</h3>
+                            <p class="text-sm text-gray-400">Drama, Crime • 5 Seasons</p>
+                            <div class="flex items-center mt-2">
+                                <span class="text-yellow-400"><i class="fas fa-star"></i></span>
+                                <span class="ml-1 text-sm">4.9/5</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="film-card bg-slate-800 rounded-lg overflow-hidden shadow-lg cursor-pointer" data-id="3">
+                        <div class="relative pb-2/3 h-64">
+                            <svg class="absolute h-full w-full object-cover" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="100" height="100" fill="#334155"/>
+                                <text x="50%" y="50%" font-size="12" fill="#94a3b8" text-anchor="middle" dominant-baseline="middle">The Witcher</text>
+                                <polygon points="50,20 20,80 80,80" fill="#a855f7"/>
+                                <circle cx="50" cy="40" r="10" fill="#ec4899"/>
+                                <path d="M30,30 Q50,10 70,30" stroke="#f43f5e" stroke-width="2" fill="none"/>
+                            </svg>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="text-lg font-semibold">The Witcher</h3>
+                            <p class="text-sm text-gray-400">Fantasy, Action • 2 Seasons</p>
+                            <div class="flex items-center mt-2">
+                                <span class="text-yellow-400"><i class="fas fa-star"></i></span>
+                                <span class="ml-1 text-sm">4.7/5</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="film-card bg-slate-800 rounded-lg overflow-hidden shadow-lg cursor-pointer" data-id="4">
+                        <div class="relative pb-2/3 h-64">
+                            <svg class="absolute h-full w-full object-cover" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="100" height="100" fill="#334155"/>
+                                <text x="50%" y="50%" font-size="12" fill="#94a3b8" text-anchor="middle" dominant-baseline="middle">Money Heist</text>
+                                <rect x="30" y="30" width="40" height="40" fill="#dc2626"/>
+                                <circle cx="50" cy="50" r="15" fill="#fbbf24" stroke="#ffffff" stroke-width="2"/>
+                                <path d="M25,25 L75,75" stroke="#ffffff" stroke-width="2"/>
+                                <path d="M75,25 L25,75" stroke="#ffffff" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="text-lg font-semibold">Money Heist</h3>
+                            <p class="text-sm text-gray-400">Crime, Thriller • 5 Seasons</p>
+                            <div class="flex items-center mt-2">
+                                <span class="text-yellow-400"><i class="fas fa-star"></i></span>
+                                <span class="ml-1 text-sm">4.6/5</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </header>
 
-        <!-- Tabs -->
-        <div class="container mx-auto px-4 py-6">
-            <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                <div class="flex border-b overflow-x-auto">
-                    <button id="tab-siswa" class="tab-button px-6 py-4 text-lg font-medium text-blue-600 border-b-2 border-blue-600 focus:outline-none whitespace-nowrap">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
-                        Siswa
-                    </button>
-                    <button id="tab-kehadiran" class="tab-button px-6 py-4 text-lg font-medium text-gray-500 hover:text-blue-600 focus:outline-none whitespace-nowrap">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                        </svg>
-                        Kehadiran
-                    </button>
-                    <button id="tab-rekap" class="tab-button px-6 py-4 text-lg font-medium text-gray-500 hover:text-blue-600 focus:outline-none whitespace-nowrap">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        Rekap Kehadiran
-                    </button>
-                </div>
-
-                <!-- Tab Content: Siswa -->
-                <div id="content-siswa" class="tab-content active p-6">
-                    <div class="flex flex-col md:flex-row justify-between mb-6">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4 md:mb-0">Daftar Siswa Kelas 8B</h2>
-                        <button id="btn-add-student" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center transition duration-300">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold mb-4">Popular Movies</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <!-- Movie Cards -->
+                    <div class="film-card bg-slate-800 rounded-lg overflow-hidden shadow-lg cursor-pointer" data-id="5">
+                        <div class="relative pb-2/3 h-64">
+                            <svg class="absolute h-full w-full object-cover" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="100" height="100" fill="#334155"/>
+                                <text x="50%" y="50%" font-size="12" fill="#94a3b8" text-anchor="middle" dominant-baseline="middle">Inception</text>
+                                <circle cx="50" cy="30" r="15" fill="#0ea5e9"/>
+                                <rect x="30" y="55" width="40" height="25" fill="#0284c7"/>
+                                <path d="M20,80 Q50,60 80,80" stroke="#38bdf8" stroke-width="2" fill="none"/>
                             </svg>
-                            Tambah Siswa
-                        </button>
-                    </div>
-
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                        <div class="flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <p class="text-blue-700">Total Siswa: <span id="total-students" class="font-semibold">0</span></p>
                         </div>
-                    </div>
-
-                    <div class="relative overflow-x-auto rounded-lg">
-                        <table class="w-full text-left">
-                            <thead class="bg-gray-100 text-gray-700">
-                                <tr>
-                                    <th class="px-6 py-3">No</th>
-                                    <th class="px-6 py-3">NIS</th>
-                                    <th class="px-6 py-3">Nama Siswa</th>
-                                    <th class="px-6 py-3">Jenis Kelamin</th>
-                                    <th class="px-6 py-3">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="student-list" class="bg-white divide-y">
-                                <!-- Student data will be populated here -->
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div id="no-students" class="text-center py-8 hidden">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                        </svg>
-                        <p class="mt-4 text-gray-500">Belum ada data siswa. Silakan tambahkan siswa baru.</p>
-                    </div>
-                </div>
-
-                <!-- Tab Content: Kehadiran -->
-                <div id="content-kehadiran" class="tab-content p-6">
-                    <div class="flex flex-col md:flex-row justify-between mb-6">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4 md:mb-0">Kehadiran Siswa</h2>
-                        <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2">
-                            <input type="date" id="attendance-date" class="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead class="bg-gray-100 text-gray-700">
-                                    <tr>
-                                        <th class="px-6 py-3">No</th>
-                                        <th class="px-6 py-3">NIS</th>
-                                        <th class="px-6 py-3">Nama Siswa</th>
-                                        <th class="px-6 py-3 text-center">Status Kehadiran</th>
-                                        <th class="px-6 py-3">Keterangan</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="attendance-list" class="bg-white divide-y">
-                                    <!-- Attendance data will be populated here -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div id="no-attendance-data" class="text-center py-8 hidden">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <p class="mt-4 text-gray-500">Belum ada data kehadiran untuk tanggal yang dipilih.</p>
-                    </div>
-                </div>
-
-                <!-- Tab Content: Rekap Kehadiran -->
-                <div id="content-rekap" class="tab-content p-6">
-                    <div class="flex flex-col md:flex-row justify-between mb-6">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4 md:mb-0">Rekap Kehadiran Siswa</h2>
-                    </div>
-
-                    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Generate Laporan Kehadiran</h3>
-                        
-                        <div class="flex flex-col space-y-4">
-                            <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Awal</label>
-                                    <input type="date" id="start-date" class="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Akhir</label>
-                                    <input type="date" id="end-date" class="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                </div>
+                        <div class="p-4">
+                            <h3 class="text-lg font-semibold">Inception</h3>
+                            <p class="text-sm text-gray-400">Sci-Fi, Action • 2010</p>
+                            <div class="flex items-center mt-2">
+                                <span class="text-yellow-400"><i class="fas fa-star"></i></span>
+                                <span class="ml-1 text-sm">4.8/5</span>
                             </div>
-                            
-                            <div>
-                                <button id="btn-generate-report" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center transition duration-300">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                    Generate Rekap
+                        </div>
+                    </div>
+
+                    <div class="film-card bg-slate-800 rounded-lg overflow-hidden shadow-lg cursor-pointer" data-id="6">
+                        <div class="relative pb-2/3 h-64">
+                            <svg class="absolute h-full w-full object-cover" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="100" height="100" fill="#334155"/>
+                                <text x="50%" y="50%" font-size="12" fill="#94a3b8" text-anchor="middle" dominant-baseline="middle">The Dark Knight</text>
+                                <rect x="20" y="20" width="60" height="40" fill="#1e293b"/>
+                                <circle cx="50" cy="70" r="15" fill="#fbbf24"/>
+                                <path d="M30,40 L70,40" stroke="#fbbf24" stroke-width="3"/>
+                            </svg>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="text-lg font-semibold">The Dark Knight</h3>
+                            <p class="text-sm text-gray-400">Action, Crime • 2008</p>
+                            <div class="flex items-center mt-2">
+                                <span class="text-yellow-400"><i class="fas fa-star"></i></span>
+                                <span class="ml-1 text-sm">4.9/5</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="film-card bg-slate-800 rounded-lg overflow-hidden shadow-lg cursor-pointer" data-id="7">
+                        <div class="relative pb-2/3 h-64">
+                            <svg class="absolute h-full w-full object-cover" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="100" height="100" fill="#334155"/>
+                                <text x="50%" y="50%" font-size="12" fill="#94a3b8" text-anchor="middle" dominant-baseline="middle">Interstellar</text>
+                                <circle cx="50" cy="50" r="25" fill="#020617"/>
+                                <circle cx="50" cy="50" r="20" fill="#1e3a8a"/>
+                                <circle cx="50" cy="50" r="15" fill="#3b82f6"/>
+                                <circle cx="50" cy="50" r="5" fill="#ffffff"/>
+                            </svg>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="text-lg font-semibold">Interstellar</h3>
+                            <p class="text-sm text-gray-400">Sci-Fi, Adventure • 2014</p>
+                            <div class="flex items-center mt-2">
+                                <span class="text-yellow-400"><i class="fas fa-star"></i></span>
+                                <span class="ml-1 text-sm">4.8/5</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="film-card bg-slate-800 rounded-lg overflow-hidden shadow-lg cursor-pointer" data-id="8">
+                        <div class="relative pb-2/3 h-64">
+                            <svg class="absolute h-full w-full object-cover" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="100" height="100" fill="#334155"/>
+                                <text x="50%" y="50%" font-size="12" fill="#94a3b8" text-anchor="middle" dominant-baseline="middle">Pulp Fiction</text>
+                                <rect x="25" y="25" width="50" height="50" fill="#fbbf24"/>
+                                <path d="M25,50 L75,50" stroke="#000000" stroke-width="3"/>
+                                <path d="M50,25 L50,75" stroke="#000000" stroke-width="3"/>
+                            </svg>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="text-lg font-semibold">Pulp Fiction</h3>
+                            <p class="text-sm text-gray-400">Crime, Drama • 1994</p>
+                            <div class="flex items-center mt-2">
+                                <span class="text-yellow-400"><i class="fas fa-star"></i></span>
+                                <span class="ml-1 text-sm">4.7/5</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Series Detail Page -->
+        <div id="series-detail" class="hidden">
+            <div class="mb-6">
+                <button id="back-button" class="flex items-center text-blue-400 hover:text-blue-500 transition">
+                    <i class="fas fa-arrow-left mr-2"></i> Back to Home
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="md:col-span-1">
+                    <div class="bg-slate-800 rounded-lg overflow-hidden shadow-lg">
+                        <div class="h-80 relative">
+                            <svg class="absolute h-full w-full object-cover" id="series-poster" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="100" height="100" fill="#334155"/>
+                                <text x="50%" y="50%" font-size="12" fill="#94a3b8" text-anchor="middle" dominant-baseline="middle" id="series-poster-title">Series Title</text>
+                                <circle cx="30" cy="30" r="10" fill="#3b82f6"/>
+                                <rect x="60" y="20" width="25" height="20" fill="#6366f1"/>
+                                <path d="M20,70 Q50,50 80,70" stroke="#ef4444" stroke-width="3" fill="none"/>
+                            </svg>
+                        </div>
+                        <div class="p-5">
+                            <h2 class="text-2xl font-bold mb-2" id="series-title">Series Title</h2>
+                            <div class="flex items-center mb-3">
+                                <span class="text-yellow-400"><i class="fas fa-star"></i></span>
+                                <span class="ml-1 text-sm">4.8/5</span>
+                                <span class="mx-2">•</span>
+                                <span class="text-sm text-gray-400" id="series-year">2022</span>
+                                <span class="mx-2">•</span>
+                                <span class="text-sm text-gray-400" id="series-genre">Drama, Sci-Fi</span>
+                            </div>
+                            <p class="text-gray-300 mb-4" id="series-description">
+                                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed euismod, nisl vel ultricies lacinia, nisl nisl aliquam nisl, vel aliquam nisl nisl vel nisl.
+                            </p>
+                            <div class="flex items-center">
+                                <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center transition">
+                                    <i class="fas fa-play mr-2"></i> Play First Episode
                                 </button>
-                            </div>
-                            
-                            <div>
-                                <button id="btn-export-excel" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center transition duration-300">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                    </svg>
-                                    Export Excel
+                                <button class="ml-3 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md flex items-center transition">
+                                    <i class="fas fa-plus mr-2"></i> Add to List
                                 </button>
                             </div>
                         </div>
                     </div>
+                </div>
+                
+                <div class="md:col-span-2">
+                    <div class="bg-slate-800 rounded-lg shadow-lg p-6">
+                        <h3 class="text-xl font-semibold mb-4">Episodes</h3>
+                        
+                        <div class="mb-6">
+                            <div class="flex border-b border-gray-700">
+                                <button class="season-tab py-2 px-4 text-blue-500 border-b-2 border-blue-500 font-medium" data-season="1">Season 1</button>
+                                <button class="season-tab py-2 px-4 text-gray-400 hover:text-gray-300" data-season="2">Season 2</button>
+                                <button class="season-tab py-2 px-4 text-gray-400 hover:text-gray-300" data-season="3">Season 3</button>
+                            </div>
+                        </div>
+                        
+                        <div class="season-content" data-season="1">
+                            <div class="episode-item p-4 rounded-lg hover:bg-slate-700 cursor-pointer mb-3 flex" data-episode="1">
+                                <div class="w-24 h-16 bg-slate-700 rounded flex-shrink-0 flex items-center justify-center">
+                                    <i class="fas fa-play text-gray-400"></i>
+                                </div>
+                                <div class="ml-4 flex-grow">
+                                    <div class="flex justify-between">
+                                        <h4 class="font-medium">1. Pilot</h4>
+                                        <span class="text-sm text-gray-400">45m</span>
+                                    </div>
+                                    <p class="text-sm text-gray-400 mt-1">The first episode where everything begins.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="episode-item p-4 rounded-lg hover:bg-slate-700 cursor-pointer mb-3 flex" data-episode="2">
+                                <div class="w-24 h-16 bg-slate-700 rounded flex-shrink-0 flex items-center justify-center">
+                                    <i class="fas fa-play text-gray-400"></i>
+                                </div>
+                                <div class="ml-4 flex-grow">
+                                    <div class="flex justify-between">
+                                        <h4 class="font-medium">2. The Mystery Begins</h4>
+                                        <span class="text-sm text-gray-400">42m</span>
+                                    </div>
+                                    <p class="text-sm text-gray-400 mt-1">The plot thickens as new characters are introduced.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="episode-item p-4 rounded-lg hover:bg-slate-700 cursor-pointer mb-3 flex" data-episode="3">
+                                <div class="w-24 h-16 bg-slate-700 rounded flex-shrink-0 flex items-center justify-center">
+                                    <i class="fas fa-play text-gray-400"></i>
+                                </div>
+                                <div class="ml-4 flex-grow">
+                                    <div class="flex justify-between">
+                                        <h4 class="font-medium">3. Revelations</h4>
+                                        <span class="text-sm text-gray-400">47m</span>
+                                    </div>
+                                    <p class="text-sm text-gray-400 mt-1">Shocking discoveries change everything for our heroes.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="season-content hidden" data-season="2">
+                            <div class="episode-item p-4 rounded-lg hover:bg-slate-700 cursor-pointer mb-3 flex" data-episode="1">
+                                <div class="w-24 h-16 bg-slate-700 rounded flex-shrink-0 flex items-center justify-center">
+                                    <i class="fas fa-play text-gray-400"></i>
+                                </div>
+                                <div class="ml-4 flex-grow">
+                                    <div class="flex justify-between">
+                                        <h4 class="font-medium">1. New Beginnings</h4>
+                                        <span class="text-sm text-gray-400">50m</span>
+                                    </div>
+                                    <p class="text-sm text-gray-400 mt-1">The second season starts with a bang.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="episode-item p-4 rounded-lg hover:bg-slate-700 cursor-pointer mb-3 flex" data-episode="2">
+                                <div class="w-24 h-16 bg-slate-700 rounded flex-shrink-0 flex items-center justify-center">
+                                    <i class="fas fa-play text-gray-400"></i>
+                                </div>
+                                <div class="ml-4 flex-grow">
+                                    <div class="flex justify-between">
+                                        <h4 class="font-medium">2. Deeper Secrets</h4>
+                                        <span class="text-sm text-gray-400">48m</span>
+                                    </div>
+                                    <p class="text-sm text-gray-400 mt-1">The plot gets more complex as new mysteries unfold.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="season-content hidden" data-season="3">
+                            <div class="episode-item p-4 rounded-lg hover:bg-slate-700 cursor-pointer mb-3 flex" data-episode="1">
+                                <div class="w-24 h-16 bg-slate-700 rounded flex-shrink-0 flex items-center justify-center">
+                                    <i class="fas fa-play text-gray-400"></i>
+                                </div>
+                                <div class="ml-4 flex-grow">
+                                    <div class="flex justify-between">
+                                        <h4 class="font-medium">1. The Final Chapter</h4>
+                                        <span class="text-sm text-gray-400">55m</span>
+                                    </div>
+                                    <p class="text-sm text-gray-400 mt-1">The beginning of the end starts here.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                    <div id="attendance-report" class="bg-white rounded-lg shadow-md p-6 hidden">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-semibold text-gray-800">Hasil Rekap Kehadiran</h3>
-                            <span id="report-date-range" class="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full"></span>
+        <!-- Video Player Page -->
+        <div id="video-player-page" class="hidden">
+            <div class="mb-6">
+                <button id="back-to-series" class="flex items-center text-blue-400 hover:text-blue-500 transition">
+                    <i class="fas fa-arrow-left mr-2"></i> Back to Series
+                </button>
+            </div>
+            
+            <div class="bg-slate-900 rounded-lg overflow-hidden shadow-2xl">
+                <div class="custom-video-player w-full relative">
+                    <video id="main-video" class="w-full aspect-video bg-black" poster="">
+                        <source src="" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    
+                    <div class="video-controls">
+                        <div class="progress-container mb-3" id="progress-container">
+                            <div class="progress-bar" id="progress-bar"></div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <button class="control-button" id="play-pause">
+                                    <i class="fas fa-play" id="play-icon"></i>
+                                </button>
+                                
+                                <button class="control-button" id="rewind">
+                                    <i class="fas fa-backward-step"></i>
+                                </button>
+                                
+                                <button class="control-button" id="forward">
+                                    <i class="fas fa-forward-step"></i>
+                                </button>
+                                
+                                <div class="flex items-center ml-3">
+                                    <button class="control-button" id="volume-btn">
+                                        <i class="fas fa-volume-up" id="volume-icon"></i>
+                                    </button>
+                                    <input type="range" class="volume-slider" id="volume-slider" min="0" max="1" step="0.1" value="1">
+                                </div>
+                                
+                                <span class="text-sm text-white ml-3" id="time-display">0:00 / 0:00</span>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <button class="control-button" id="settings-btn">
+                                    <i class="fas fa-cog"></i>
+                                </button>
+                                
+                                <button class="control-button" id="fullscreen-btn">
+                                    <i class="fas fa-expand"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-5">
+                    <h2 class="text-2xl font-bold mb-2" id="episode-title">Episode Title</h2>
+                    <div class="flex items-center mb-3">
+                        <span class="text-sm text-gray-400" id="episode-info">Season 1, Episode 1</span>
+                        <span class="mx-2">•</span>
+                        <span class="text-sm text-gray-400" id="episode-duration">45m</span>
+                    </div>
+                    <p class="text-gray-300" id="episode-description">
+                        Episode description goes here. This is where you would see a summary of what happens in this episode.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="mt-8">
+                <h3 class="text-xl font-semibold mb-4">More Episodes</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div class="bg-slate-800 rounded-lg overflow-hidden cursor-pointer hover:bg-slate-700 transition">
+                        <div class="h-32 bg-slate-700 flex items-center justify-center">
+                            <i class="fas fa-play text-gray-400"></i>
+                        </div>
+                        <div class="p-3">
+                            <h4 class="font-medium">2. The Mystery Begins</h4>
+                            <p class="text-xs text-gray-400 mt-1">42m</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-slate-800 rounded-lg overflow-hidden cursor-pointer hover:bg-slate-700 transition">
+                        <div class="h-32 bg-slate-700 flex items-center justify-center">
+                            <i class="fas fa-play text-gray-400"></i>
+                        </div>
+                        <div class="p-3">
+                            <h4 class="font-medium">3. Revelations</h4>
+                            <p class="text-xs text-gray-400 mt-1">47m</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Panel -->
+        <div id="admin-panel" class="hidden">
+            <div class="mb-6">
+                <button id="admin-back-button" class="flex items-center text-blue-400 hover:text-blue-500 transition">
+                    <i class="fas fa-arrow-left mr-2"></i> Back to Home
+                </button>
+                <h2 class="text-2xl font-bold mt-4 mb-6">Admin Panel</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="md:col-span-1">
+                    <div class="admin-section p-6">
+                        <h3 class="text-xl font-semibold mb-4">Manage Content</h3>
+                        <ul class="space-y-2">
+                            <li>
+                                <button class="w-full text-left py-2 px-3 rounded bg-slate-700 hover:bg-slate-600 transition flex items-center admin-nav-btn active" data-target="upload-section">
+                                    <i class="fas fa-upload mr-2"></i> Upload Videos
+                                </button>
+                            </li>
+                            <li>
+                                <button class="w-full text-left py-2 px-3 rounded hover:bg-slate-700 transition flex items-center admin-nav-btn" data-target="manage-series-section">
+                                    <i class="fas fa-film mr-2"></i> Manage Series
+                                </button>
+                            </li>
+                            <li>
+                                <button class="w-full text-left py-2 px-3 rounded hover:bg-slate-700 transition flex items-center admin-nav-btn" data-target="manage-users-section">
+                                    <i class="fas fa-users mr-2"></i> Manage Users
+                                </button>
+                            </li>
+                            <li>
+                                <button class="w-full text-left py-2 px-3 rounded hover:bg-slate-700 transition flex items-center admin-nav-btn" data-target="settings-section">
+                                    <i class="fas fa-cog mr-2"></i> Settings
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="md:col-span-2">
+                    <!-- Upload Videos Section -->
+                    <div id="upload-section" class="admin-section p-6 admin-content">
+                        <h3 class="text-xl font-semibold mb-4">Upload Videos</h3>
+                        <p class="text-gray-400 mb-6">Upload video files (max 2GB). Supported formats: MP4, WebM, MKV.</p>
+                        
+                        <div class="upload-area p-8 rounded-lg flex flex-col items-center justify-center cursor-pointer" id="drop-area">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-500 mb-4"></i>
+                            <p class="text-center text-gray-400 mb-2">Drag and drop video files here</p>
+                            <p class="text-center text-gray-500 text-sm mb-4">or</p>
+                            <label class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md cursor-pointer transition">
+                                Browse Files
+                                <input type="file" id="file-input" class="hidden" accept="video/*">
+                            </label>
+                            <p class="text-gray-500 text-sm mt-4">Maximum file size: 2GB</p>
+                        </div>
+                        
+                        <div id="upload-progress" class="mt-6 hidden">
+                            <div class="flex justify-between mb-2">
+                                <span id="file-name" class="text-sm">filename.mp4</span>
+                                <span id="upload-percentage" class="text-sm">0%</span>
+                            </div>
+                            <div class="progress-upload">
+                                <div class="progress-upload-bar" id="upload-progress-bar"></div>
+                            </div>
+                        </div>
+                        
+                        <div id="upload-form" class="mt-6 hidden">
+                            <h4 class="font-medium mb-4">Video Details</h4>
+                            
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-400 mb-1">Title</label>
+                                <input type="text" class="w-full bg-slate-700 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:border-blue-500">
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-400 mb-1">Description</label>
+                                <textarea class="w-full bg-slate-700 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:border-blue-500 h-24"></textarea>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-400 mb-1">Series</label>
+                                    <select class="w-full bg-slate-700 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:border-blue-500">
+                                        <option>Select Series</option>
+                                        <option>Stranger Things</option>
+                                        <option>Breaking Bad</option>
+                                        <option>The Witcher</option>
+                                        <option>Money Heist</option>
+                                        <option>+ Create New Series</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-400 mb-1">Season</label>
+                                    <select class="w-full bg-slate-700 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:border-blue-500">
+                                        <option>Select Season</option>
+                                        <option>Season 1</option>
+                                        <option>Season 2</option>
+                                        <option>Season 3</option>
+                                        <option>+ Add New Season</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4 mb-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-400 mb-1">Episode Number</label>
+                                    <input type="number" class="w-full bg-slate-700 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:border-blue-500" min="1">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-400 mb-1">Duration (minutes)</label>
+                                    <input type="number" class="w-full bg-slate-700 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:border-blue-500" min="1">
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-end">
+                                <button class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md mr-3 transition">Cancel</button>
+                                <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition">Save Video</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Manage Series Section -->
+                    <div id="manage-series-section" class="admin-section p-6 admin-content hidden">
+                        <h3 class="text-xl font-semibold mb-4">Manage Series</h3>
+                        <p class="text-gray-400 mb-6">Add, edit or delete series from your collection.</p>
+                        
+                        <div class="flex justify-between mb-6">
+                            <input type="text" placeholder="Search series..." class="bg-slate-700 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:border-blue-500 w-64">
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center transition">
+                                <i class="fas fa-plus mr-2"></i> Add New Series
+                            </button>
                         </div>
                         
                         <div class="overflow-x-auto">
-                            <table class="w-full text-left" id="report-table">
-                                <thead class="bg-gray-100 text-gray-700">
+                            <table class="min-w-full bg-slate-800 rounded-lg overflow-hidden">
+                                <thead>
                                     <tr>
-                                        <th class="px-6 py-3">No</th>
-                                        <th class="px-6 py-3">NIS</th>
-                                        <th class="px-6 py-3">Nama Siswa</th>
-                                        <th class="px-6 py-3 text-center">Detail</th>
+                                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Title</th>
+                                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Seasons</th>
+                                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Episodes</th>
+                                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody id="report-data" class="bg-white divide-y">
-                                    <!-- Report data will be populated here -->
+                                <tbody class="divide-y divide-slate-700">
+                                    <tr>
+                                        <td class="py-3 px-4 whitespace-nowrap">Stranger Things</td>
+                                        <td class="py-3 px-4 whitespace-nowrap">4</td>
+                                        <td class="py-3 px-4 whitespace-nowrap">32</td>
+                                        <td class="py-3 px-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                                        </td>
+                                        <td class="py-3 px-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-blue-400 hover:text-blue-500 mr-3"><i class="fas fa-edit"></i></button>
+                                            <button class="text-red-400 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-4 whitespace-nowrap">Breaking Bad</td>
+                                        <td class="py-3 px-4 whitespace-nowrap">5</td>
+                                        <td class="py-3 px-4 whitespace-nowrap">62</td>
+                                        <td class="py-3 px-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                                        </td>
+                                        <td class="py-3 px-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-blue-400 hover:text-blue-500 mr-3"><i class="fas fa-edit"></i></button>
+                                            <button class="text-red-400 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-4 whitespace-nowrap">The Witcher</td>
+                                        <td class="py-3 px-4 whitespace-nowrap">2</td>
+                                        <td class="py-3 px-4 whitespace-nowrap">16</td>
+                                        <td class="py-3 px-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Upcoming</span>
+                                        </td>
+                                        <td class="py-3 px-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-blue-400 hover:text-blue-500 mr-3"><i class="fas fa-edit"></i></button>
+                                            <button class="text-red-400 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
                     
-                    <div id="no-report-data" class="text-center py-8">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <p class="mt-4 text-gray-500">Silakan pilih rentang tanggal dan klik tombol Generate Rekap untuk melihat laporan kehadiran.</p>
+                    <!-- Manage Users Section -->
+                    <div id="manage-users-section" class="admin-section p-6 admin-content hidden">
+                        <h3 class="text-xl font-semibold mb-4">Manage Users</h3>
+                        <p class="text-gray-400 mb-6">Add, edit or delete user accounts.</p>
+                        
+                        <div class="flex justify-between mb-6">
+                            <input type="text" placeholder="Search users..." class="bg-slate-700 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:border-blue-500 w-64">
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center transition">
+                                <i class="fas fa-plus mr-2"></i> Add New User
+                            </button>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-slate-800 rounded-lg overflow-hidden">
+                                <thead>
+                                    <tr>
+                                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Username</th>
+                                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Email</th>
+                                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Role</th>
+                                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-700">
+                                    <tr>
+                                        <td class="py-3 px-4 whitespace-nowrap">admin</td>
+                                        <td class="py-3 px-4 whitespace-nowrap">admin@example.com</td>
+                                        <td class="py-3 px-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">Admin</span>
+                                        </td>
+                                        <td class="py-3 px-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                                        </td>
+                                        <td class="py-3 px-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-blue-400 hover:text-blue-500 mr-3"><i class="fas fa-edit"></i></button>
+                                            <button class="text-red-400 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-4 whitespace-nowrap">user1</td>
+                                        <td class="py-3 px-4 whitespace-nowrap">user1@example.com</td>
+                                        <td class="py-3 px-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">User</span>
+                                        </td>
+                                        <td class="py-3 px-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                                        </td>
+                                        <td class="py-3 px-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-blue-400 hover:text-blue-500 mr-3"><i class="fas fa-edit"></i></button>
+                                            <button class="text-red-400 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-4 whitespace-nowrap">user2</td>
+                                        <td class="py-3 px-4 whitespace-nowrap">user2@example.com</td>
+                                        <td class="py-3 px-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">User</span>
+                                        </td>
+                                        <td class="py-3 px-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Inactive</span>
+                                        </td>
+                                        <td class="py-3 px-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-blue-400 hover:text-blue-500 mr-3"><i class="fas fa-edit"></i></button>
+                                            <button class="text-red-400 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Settings Section -->
+                    <div id="settings-section" class="admin-section p-6 admin-content hidden">
+                        <h3 class="text-xl font-semibold mb-4">Settings</h3>
+                        <p class="text-gray-400 mb-6">Configure your streaming platform settings.</p>
+                        
+                        <div class="mb-6">
+                            <h4 class="font-medium mb-4">General Settings</h4>
+                            
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-400 mb-1">Site Name</label>
+                                <input type="text" value="FilmFlix" class="w-full bg-slate-700 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:border-blue-500">
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-400 mb-1">Site Description</label>
+                                <textarea class="w-full bg-slate-700 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:border-blue-500 h-24">Your ultimate streaming platform for movies and TV series.</textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <h4 class="font-medium mb-4">Storage Settings</h4>
+                            
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-400 mb-1">Storage Location</label>
+                                <select class="w-full bg-slate-700 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:border-blue-500">
+                                    <option selected>Local Storage</option>
+                                    <option>Cloud Storage</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-400 mb-1">Local Storage Path</label>
+                                <input type="text" value="/var/www/html/videos" class="w-full bg-slate-700 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:border-blue-500">
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-400 mb-1">Maximum Upload Size (MB)</label>
+                                <input type="number" value="2048" class="w-full bg-slate-700 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:border-blue-500">
+                                <p class="text-xs text-gray-500 mt-1">Current setting: 2GB maximum file size</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end">
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition">Save Settings</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </main>
 
-    <!-- Add Student Modal -->
-    <div id="add-student-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-            <div class="border-b px-6 py-4 flex justify-between items-center">
-                <h3 class="text-lg font-semibold text-gray-800">Tambah Siswa Baru</h3>
-                <button id="close-add-modal" class="text-gray-500 hover:text-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-            <div class="p-6">
-                <form id="add-student-form">
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1" for="nis">NIS</label>
-                        <input type="text" id="nis" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+    <!-- Footer -->
+    <footer class="bg-slate-800 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="md:flex md:justify-between">
+                <div class="mb-8 md:mb-0">
+                    <div class="flex items-center">
+                        <i class="fas fa-film text-blue-500 text-2xl mr-2"></i>
+                        <span class="text-xl font-bold text-white">FilmFlix</span>
                     </div>
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1" for="name">Nama Lengkap</label>
-                        <input type="text" id="name" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                    </div>
-                    <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Kelamin</label>
-                        <div class="flex space-x-4">
-                            <label class="flex items-center">
-                                <input type="radio" name="gender" value="Laki-laki" class="h-4 w-4 text-blue-600 focus:ring-blue-500" checked>
-                                <span class="ml-2 text-gray-700">Laki-laki</span>
-                            </label>
-                            <label class="flex items-center">
-                                <input type="radio" name="gender" value="Perempuan" class="h-4 w-4 text-blue-600 focus:ring-blue-500">
-                                <span class="ml-2 text-gray-700">Perempuan</span>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="flex justify-end">
-                        <button type="button" id="cancel-add" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg mr-2">Batal</button>
-                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">Simpan</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div id="delete-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-            <div class="border-b px-6 py-4 flex justify-between items-center">
-                <h3 class="text-lg font-semibold text-gray-800">Konfirmasi Hapus</h3>
-                <button id="close-delete-modal" class="text-gray-500 hover:text-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-            <div class="p-6">
-                <p class="text-gray-700 mb-6">Apakah Anda yakin ingin menghapus siswa <span id="delete-student-name" class="font-semibold"></span>?</p>
-                <div class="flex justify-end">
-                    <button id="cancel-delete" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg mr-2">Batal</button>
-                    <button id="confirm-delete" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">Hapus</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Attendance Detail Modal -->
-    <div id="detail-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4">
-            <div class="border-b px-6 py-4 flex justify-between items-center">
-                <h3 class="text-lg font-semibold text-gray-800">Detail Kehadiran <span id="detail-student-name" class="font-semibold"></span></h3>
-                <button id="close-detail-modal" class="text-gray-500 hover:text-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-            <div class="p-6">
-                <!-- Summary of attendance -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div class="bg-green-50 border border-green-200 rounded-lg p-3">
-                        <div class="flex justify-between items-center">
-                            <h4 class="font-medium text-green-800">Hadir</h4>
-                            <span id="detail-hadir" class="text-lg font-bold text-green-600">0</span>
-                        </div>
-                    </div>
-                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                        <div class="flex justify-between items-center">
-                            <h4 class="font-medium text-yellow-800">Sakit</h4>
-                            <span id="detail-sakit" class="text-lg font-bold text-yellow-600">0</span>
-                        </div>
-                    </div>
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                        <div class="flex justify-between items-center">
-                            <h4 class="font-medium text-blue-800">Ijin</h4>
-                            <span id="detail-ijin" class="text-lg font-bold text-blue-600">0</span>
-                        </div>
-                    </div>
-                    <div class="bg-red-50 border border-red-200 rounded-lg p-3">
-                        <div class="flex justify-between items-center">
-                            <h4 class="font-medium text-red-800">Alpha</h4>
-                            <span id="detail-alpha" class="text-lg font-bold text-red-600">0</span>
-                        </div>
-                    </div>
+                    <p class="text-gray-400 mt-2 max-w-md">Your ultimate streaming platform for movies and TV series. Watch anytime, anywhere.</p>
                 </div>
                 
-                <div class="overflow-y-auto max-h-96">
-                    <table class="w-full text-left">
-                        <thead class="bg-gray-100 text-gray-700">
-                            <tr>
-                                <th class="px-6 py-3">No</th>
-                                <th class="px-6 py-3">Tanggal</th>
-                                <th class="px-6 py-3">Status</th>
-                                <th class="px-6 py-3">Keterangan</th>
-                            </tr>
-                        </thead>
-                        <tbody id="detail-list" class="bg-white divide-y">
-                            <!-- Detail data will be populated here -->
-                        </tbody>
-                    </table>
-                </div>
-                <div class="mt-6 flex justify-end">
-                    <button id="close-detail" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg">Tutup</button>
+                <div class="grid grid-cols-2 gap-8 sm:grid-cols-3">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-300 tracking-wider uppercase mb-4">Navigation</h3>
+                        <ul class="space-y-2">
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">Home</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">Series</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">Movies</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">New Releases</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-300 tracking-wider uppercase mb-4">Support</h3>
+                        <ul class="space-y-2">
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">FAQ</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">Help Center</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">Contact</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-300 tracking-wider uppercase mb-4">Legal</h3>
+                        <ul class="space-y-2">
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">Terms of Service</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">Privacy Policy</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">Cookie Policy</a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
+            
+            <div class="border-t border-gray-700 pt-8 mt-8 md:flex md:items-center md:justify-between">
+                <div class="flex space-x-6 md:order-2">
+                    <a href="#" class="text-gray-400 hover:text-white transition">
+                        <i class="fab fa-facebook"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                </div>
+                <p class="mt-8 text-base text-gray-400 md:mt-0 md:order-1">
+                    &copy; 2023 FilmFlix. All rights reserved.
+                </p>
+            </div>
         </div>
-    </div>
+    </footer>
 
     <script>
-        // Initialize data
-        let students = [
-            { id: 1, nis: "2023001", name: "Ahmad Rizki", gender: "Laki-laki" },
-            { id: 2, nis: "2023002", name: "Budi Santoso", gender: "Laki-laki" },
-            { id: 3, nis: "2023003", name: "Citra Dewi", gender: "Perempuan" },
-            { id: 4, nis: "2023004", name: "Dian Purnama", gender: "Perempuan" },
-            { id: 5, nis: "2023005", name: "Eko Prasetyo", gender: "Laki-laki" }
-        ];
-
-        let attendance = {};
-        
-        // Set current date
-        const today = new Date();
-        const formattedDate = today.toLocaleDateString('id-ID', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-        });
-        document.getElementById('current-date').textContent = formattedDate;
-        
-        // Format date for input fields
-        const formatDateForInput = (date) => {
-            return date.toISOString().split('T')[0];
-        };
-        
-        // Format date for display
-        const formatDateForDisplay = (dateStr) => {
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('id-ID', { 
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-            });
-        };
-        
-        // Format date for short display (for Excel headers)
-        const formatDateForShortDisplay = (dateStr) => {
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('id-ID', { 
-                day: 'numeric',
-                month: 'numeric'
-            });
-        };
-        
-        // Set default dates
-        document.getElementById('attendance-date').value = formatDateForInput(today);
-        document.getElementById('start-date').value = formatDateForInput(new Date(today.getFullYear(), today.getMonth(), 1));
-        document.getElementById('end-date').value = formatDateForInput(today);
-
-        // Tab switching
-        const tabButtons = document.querySelectorAll('.tab-button');
-        const tabContents = document.querySelectorAll('.tab-content');
-
-        tabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                // Remove active class from all tabs
-                tabButtons.forEach(btn => {
-                    btn.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
-                    btn.classList.add('text-gray-500');
+        // Navigation between pages
+        document.addEventListener('DOMContentLoaded', function() {
+            // Film card click event
+            const filmCards = document.querySelectorAll('.film-card');
+            filmCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    const filmId = this.getAttribute('data-id');
+                    showSeriesDetail(filmId);
                 });
-                
-                // Add active class to clicked tab
-                button.classList.remove('text-gray-500');
-                button.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
-                
-                // Show corresponding content
-                const tabId = button.id.replace('tab-', 'content-');
-                tabContents.forEach(content => {
-                    content.classList.remove('active');
+            });
+            
+            // Back button event
+            document.getElementById('back-button').addEventListener('click', function() {
+                document.getElementById('series-detail').classList.add('hidden');
+                document.getElementById('home-page').classList.remove('hidden');
+            });
+            
+            // Back to series button event
+            document.getElementById('back-to-series').addEventListener('click', function() {
+                document.getElementById('video-player-page').classList.add('hidden');
+                document.getElementById('series-detail').classList.remove('hidden');
+            });
+            
+            // Season tabs
+            const seasonTabs = document.querySelectorAll('.season-tab');
+            seasonTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const season = this.getAttribute('data-season');
+                    
+                    // Update active tab
+                    document.querySelectorAll('.season-tab').forEach(t => {
+                        t.classList.remove('text-blue-500', 'border-b-2', 'border-blue-500', 'font-medium');
+                        t.classList.add('text-gray-400');
+                    });
+                    this.classList.add('text-blue-500', 'border-b-2', 'border-blue-500', 'font-medium');
+                    this.classList.remove('text-gray-400');
+                    
+                    // Show selected season content
+                    document.querySelectorAll('.season-content').forEach(content => {
+                        content.classList.add('hidden');
+                    });
+                    document.querySelector(`.season-content[data-season="${season}"]`).classList.remove('hidden');
                 });
-                document.getElementById(tabId).classList.add('active');
+            });
+            
+            // Episode click event
+            const episodes = document.querySelectorAll('.episode-item');
+            episodes.forEach(episode => {
+                episode.addEventListener('click', function() {
+                    const episodeId = this.getAttribute('data-episode');
+                    showVideoPlayer(episodeId);
+                });
+            });
+            
+            // Home link event
+            document.getElementById('home-link').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('series-detail').classList.add('hidden');
+                document.getElementById('video-player-page').classList.add('hidden');
+                document.getElementById('admin-panel').classList.add('hidden');
+                document.getElementById('home-page').classList.remove('hidden');
+            });
+            
+            // Admin button event
+            document.getElementById('admin-button').addEventListener('click', function() {
+                document.getElementById('home-page').classList.add('hidden');
+                document.getElementById('series-detail').classList.add('hidden');
+                document.getElementById('video-player-page').classList.add('hidden');
+                document.getElementById('admin-panel').classList.remove('hidden');
+            });
+            
+            // Admin back button event
+            document.getElementById('admin-back-button').addEventListener('click', function() {
+                document.getElementById('admin-panel').classList.add('hidden');
+                document.getElementById('home-page').classList.remove('hidden');
+            });
+            
+            // Admin navigation
+            const adminNavBtns = document.querySelectorAll('.admin-nav-btn');
+            adminNavBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const target = this.getAttribute('data-target');
+                    
+                    // Update active button
+                    document.querySelectorAll('.admin-nav-btn').forEach(b => {
+                        b.classList.remove('bg-slate-700', 'active');
+                        b.classList.add('hover:bg-slate-700');
+                    });
+                    this.classList.add('bg-slate-700', 'active');
+                    this.classList.remove('hover:bg-slate-700');
+                    
+                    // Show selected content
+                    document.querySelectorAll('.admin-content').forEach(content => {
+                        content.classList.add('hidden');
+                    });
+                    document.getElementById(target).classList.remove('hidden');
+                });
+            });
+            
+            // File upload handling
+            const dropArea = document.getElementById('drop-area');
+            const fileInput = document.getElementById('file-input');
+            
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                dropArea.classList.add('dragover');
+            }
+            
+            function unhighlight() {
+                dropArea.classList.remove('dragover');
+            }
+            
+            dropArea.addEventListener('drop', handleDrop, false);
+            fileInput.addEventListener('change', handleFiles, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles({target: {files: files}});
+            }
+            
+            function handleFiles(e) {
+                const files = e.target.files;
+                if (files.length > 0) {
+                    const file = files[0];
+                    
+                    // Check file size (max 2GB)
+                    const maxSize = 2 * 1024 * 1024 * 1024; // 2GB in bytes
+                    if (file.size > maxSize) {
+                        alert('File size exceeds the maximum limit of 2GB.');
+                        return;
+                    }
+                    
+                    // Show upload progress
+                    document.getElementById('upload-progress').classList.remove('hidden');
+                    document.getElementById('file-name').textContent = file.name;
+                    
+                    // Simulate upload progress
+                    simulateUpload(file);
+                }
+            }
+            
+            function simulateUpload(file) {
+                const progressBar = document.getElementById('upload-progress-bar');
+                const percentageText = document.getElementById('upload-percentage');
+                let progress = 0;
                 
-                // If attendance tab is selected, refresh attendance display
-                if (tabId === 'content-kehadiran') {
-                    displayAttendance();
+                const interval = setInterval(() => {
+                    progress += 5;
+                    progressBar.style.width = `${progress}%`;
+                    percentageText.textContent = `${progress}%`;
+                    
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        setTimeout(() => {
+                            document.getElementById('upload-form').classList.remove('hidden');
+                        }, 500);
+                    }
+                }, 200);
+            }
+            
+            // Video player functionality
+            const video = document.getElementById('main-video');
+            const playPauseBtn = document.getElementById('play-pause');
+            const playIcon = document.getElementById('play-icon');
+            const progressContainer = document.getElementById('progress-container');
+            const progressBar = document.getElementById('progress-bar');
+            const timeDisplay = document.getElementById('time-display');
+            const volumeBtn = document.getElementById('volume-btn');
+            const volumeIcon = document.getElementById('volume-icon');
+            const volumeSlider = document.getElementById('volume-slider');
+            const fullscreenBtn = document.getElementById('fullscreen-btn');
+            const rewindBtn = document.getElementById('rewind');
+            const forwardBtn = document.getElementById('forward');
+            
+            // Play/Pause
+            playPauseBtn.addEventListener('click', togglePlayPause);
+            video.addEventListener('click', togglePlayPause);
+            
+            function togglePlayPause() {
+                if (video.paused) {
+                    video.play();
+                    playIcon.classList.remove('fa-play');
+                    playIcon.classList.add('fa-pause');
+                } else {
+                    video.pause();
+                    playIcon.classList.remove('fa-pause');
+                    playIcon.classList.add('fa-play');
+                }
+            }
+            
+            // Update progress bar
+            video.addEventListener('timeupdate', updateProgress);
+            
+            function updateProgress() {
+                const percentage = (video.currentTime / video.duration) * 100;
+                progressBar.style.width = `${percentage}%`;
+                
+                // Update time display
+                const currentMinutes = Math.floor(video.currentTime / 60);
+                const currentSeconds = Math.floor(video.currentTime % 60);
+                const durationMinutes = Math.floor(video.duration / 60) || 0;
+                const durationSeconds = Math.floor(video.duration % 60) || 0;
+                
+                timeDisplay.textContent = `${currentMinutes}:${currentSeconds < 10 ? '0' : ''}${currentSeconds} / ${durationMinutes}:${durationSeconds < 10 ? '0' : ''}${durationSeconds}`;
+            }
+            
+            // Seek functionality
+            progressContainer.addEventListener('click', seek);
+            
+            function seek(e) {
+                const percent = (e.offsetX / progressContainer.offsetWidth);
+                video.currentTime = percent * video.duration;
+            }
+            
+            // Volume control
+            volumeSlider.addEventListener('input', changeVolume);
+            volumeBtn.addEventListener('click', toggleMute);
+            
+            function changeVolume() {
+                video.volume = volumeSlider.value;
+                updateVolumeIcon();
+            }
+            
+            function toggleMute() {
+                video.muted = !video.muted;
+                updateVolumeIcon();
+            }
+            
+            function updateVolumeIcon() {
+                volumeIcon.className = '';
+                
+                if (video.muted || video.volume === 0) {
+                    volumeIcon.classList.add('fas', 'fa-volume-mute');
+                    volumeSlider.value = 0;
+                } else if (video.volume < 0.5) {
+                    volumeIcon.classList.add('fas', 'fa-volume-down');
+                } else {
+                    volumeIcon.classList.add('fas', 'fa-volume-up');
+                }
+            }
+            
+            // Fullscreen
+            fullscreenBtn.addEventListener('click', toggleFullscreen);
+            
+            function toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    if (video.requestFullscreen) {
+                        video.requestFullscreen();
+                    } else if (video.webkitRequestFullscreen) {
+                        video.webkitRequestFullscreen();
+                    } else if (video.msRequestFullscreen) {
+                        video.msRequestFullscreen();
+                    }
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    } else if (document.msExitFullscreen) {
+                        document.msExitFullscreen();
+                    }
+                }
+            }
+            
+            // Forward/Rewind 10 seconds
+            forwardBtn.addEventListener('click', forward10);
+            rewindBtn.addEventListener('click', rewind10);
+            
+            function forward10() {
+                video.currentTime = Math.min(video.currentTime + 10, video.duration);
+            }
+            
+            function rewind10() {
+                video.currentTime = Math.max(video.currentTime - 10, 0);
+            }
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (document.getElementById('video-player-page').classList.contains('hidden')) {
+                    return;
+                }
+                
+                switch(e.key.toLowerCase()) {
+                    case ' ':
+                    case 'k':
+                        togglePlayPause();
+                        e.preventDefault();
+                        break;
+                    case 'arrowright':
+                        forward10();
+                        e.preventDefault();
+                        break;
+                    case 'arrowleft':
+                        rewind10();
+                        e.preventDefault();
+                        break;
+                    case 'f':
+                        toggleFullscreen();
+                        e.preventDefault();
+                        break;
+                    case 'm':
+                        toggleMute();
+                        e.preventDefault();
+                        break;
                 }
             });
         });
-
-        // Student management
-        function displayStudents() {
-            const studentList = document.getElementById('student-list');
-            const noStudents = document.getElementById('no-students');
-            const totalStudents = document.getElementById('total-students');
-            
-            studentList.innerHTML = '';
-            totalStudents.textContent = students.length;
-            
-            if (students.length === 0) {
-                noStudents.classList.remove('hidden');
-                return;
-            }
-            
-            noStudents.classList.add('hidden');
-            
-            students.forEach((student, index) => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="px-6 py-4">${index + 1}</td>
-                    <td class="px-6 py-4">${student.nis}</td>
-                    <td class="px-6 py-4 font-medium">${student.name}</td>
-                    <td class="px-6 py-4">${student.gender}</td>
-                    <td class="px-6 py-4">
-                        <button class="delete-student text-red-600 hover:text-red-800" data-id="${student.id}" data-name="${student.name}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                        </button>
-                    </td>
-                `;
-                studentList.appendChild(row);
-            });
-            
-            // Add event listeners to delete buttons
-            document.querySelectorAll('.delete-student').forEach(button => {
-                button.addEventListener('click', () => {
-                    const studentId = button.getAttribute('data-id');
-                    const studentName = button.getAttribute('data-name');
-                    openDeleteModal(studentId, studentName);
-                });
-            });
-        }
-
-        // Add student modal
-        const addStudentModal = document.getElementById('add-student-modal');
-        const addStudentForm = document.getElementById('add-student-form');
         
-        document.getElementById('btn-add-student').addEventListener('click', () => {
-            addStudentModal.classList.remove('hidden');
-        });
-        
-        document.getElementById('close-add-modal').addEventListener('click', () => {
-            addStudentModal.classList.add('hidden');
-            addStudentForm.reset();
-        });
-        
-        document.getElementById('cancel-add').addEventListener('click', () => {
-            addStudentModal.classList.add('hidden');
-            addStudentForm.reset();
-        });
-        
-        addStudentForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            const nis = document.getElementById('nis').value;
-            const name = document.getElementById('name').value;
-            const gender = document.querySelector('input[name="gender"]:checked').value;
-            
-            // Generate a new ID
-            const newId = students.length > 0 ? Math.max(...students.map(s => s.id)) + 1 : 1;
-            
-            // Add new student
-            students.push({
-                id: newId,
-                nis: nis,
-                name: name,
-                gender: gender
-            });
-            
-            // Update display
-            displayStudents();
-            
-            // Close modal and reset form
-            addStudentModal.classList.add('hidden');
-            addStudentForm.reset();
-        });
-
-        // Delete student modal
-        const deleteModal = document.getElementById('delete-modal');
-        let studentToDelete = null;
-        
-        function openDeleteModal(studentId, studentName) {
-            studentToDelete = studentId;
-            document.getElementById('delete-student-name').textContent = studentName;
-            deleteModal.classList.remove('hidden');
-        }
-        
-        document.getElementById('close-delete-modal').addEventListener('click', () => {
-            deleteModal.classList.add('hidden');
-            studentToDelete = null;
-        });
-        
-        document.getElementById('cancel-delete').addEventListener('click', () => {
-            deleteModal.classList.add('hidden');
-            studentToDelete = null;
-        });
-        
-        document.getElementById('confirm-delete').addEventListener('click', () => {
-            if (studentToDelete) {
-                // Remove student
-                students = students.filter(student => student.id != studentToDelete);
-                
-                // Remove attendance records for this student
-                Object.keys(attendance).forEach(date => {
-                    if (attendance[date][studentToDelete]) {
-                        delete attendance[date][studentToDelete];
-                    }
-                });
-                
-                // Update display
-                displayStudents();
-                
-                // Close modal
-                deleteModal.classList.add('hidden');
-                studentToDelete = null;
-            }
-        });
-
-        // Attendance management
-        function displayAttendance() {
-            const attendanceDate = document.getElementById('attendance-date').value;
-            const attendanceList = document.getElementById('attendance-list');
-            const noAttendanceData = document.getElementById('no-attendance-data');
-            
-            attendanceList.innerHTML = '';
-            
-            if (students.length === 0) {
-                noAttendanceData.classList.remove('hidden');
-                noAttendanceData.querySelector('p').textContent = 'Belum ada data siswa. Silakan tambahkan siswa terlebih dahulu.';
-                return;
-            }
-            
-            noAttendanceData.classList.add('hidden');
-            
-            // Initialize attendance for this date if it doesn't exist
-            if (!attendance[attendanceDate]) {
-                attendance[attendanceDate] = {};
-            }
-            
-            students.forEach((student, index) => {
-                // Get current attendance data for this student
-                const attendanceData = attendance[attendanceDate][student.id] || { status: 'hadir', notes: '' };
-                const currentStatus = typeof attendanceData === 'object' ? attendanceData.status : attendanceData;
-                const currentNotes = typeof attendanceData === 'object' ? attendanceData.notes : '';
-                
-                const row = document.createElement('tr');
-                row.className = 'student-row';
-                row.innerHTML = `
-                    <td class="px-6 py-4">${index + 1}</td>
-                    <td class="px-6 py-4">${student.nis}</td>
-                    <td class="px-6 py-4 font-medium">${student.name}</td>
-                    <td class="px-6 py-4">
-                        <div class="flex justify-center space-x-2">
-                            <button class="status-btn px-3 py-2 rounded-lg text-center text-sm transition duration-300 ${currentStatus === 'hadir' ? 'bg-green-600 text-white' : 'bg-green-100 text-green-800'}" 
-                                data-student="${student.id}" data-status="hadir">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                </svg>
-                                Hadir
-                            </button>
-                            <button class="status-btn px-3 py-2 rounded-lg text-center text-sm transition duration-300 ${currentStatus === 'sakit' ? 'bg-yellow-600 text-white' : 'bg-yellow-100 text-yellow-800'}" 
-                                data-student="${student.id}" data-status="sakit">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                                </svg>
-                                Sakit
-                            </button>
-                            <button class="status-btn px-3 py-2 rounded-lg text-center text-sm transition duration-300 ${currentStatus === 'ijin' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800'}" 
-                                data-student="${student.id}" data-status="ijin">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                Ijin
-                            </button>
-                            <button class="status-btn px-3 py-2 rounded-lg text-center text-sm transition duration-300 ${currentStatus === 'alpha' ? 'bg-red-600 text-white' : 'bg-red-100 text-red-800'}" 
-                                data-student="${student.id}" data-status="alpha">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                                Alpha
-                            </button>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4">
-                        <input type="text" class="attendance-notes border border-gray-300 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                            data-student="${student.id}" placeholder="Tambahkan keterangan..." value="${currentNotes}">
-                    </td>
-                `;
-                
-                attendanceList.appendChild(row);
-            });
-            
-            // Add event listeners to attendance buttons
-            document.querySelectorAll('.status-btn').forEach(button => {
-                button.addEventListener('click', () => {
-                    const studentId = button.getAttribute('data-student');
-                    const status = button.getAttribute('data-status');
-                    const date = document.getElementById('attendance-date').value;
-                    
-                    // Initialize date if it doesn't exist
-                    if (!attendance[date]) {
-                        attendance[date] = {};
-                    }
-                    
-                    // Get current notes if any
-                    const notesInput = document.querySelector(`.attendance-notes[data-student="${studentId}"]`);
-                    const notes = notesInput ? notesInput.value : '';
-                    
-                    // Set attendance status and notes
-                    attendance[date][studentId] = {
-                        status: status,
-                        notes: notes
-                    };
-                    
-                    // Update display
-                    displayAttendance();
-                });
-            });
-            
-            // Add event listeners to notes inputs
-            document.querySelectorAll('.attendance-notes').forEach(input => {
-                input.addEventListener('change', () => {
-                    const studentId = input.getAttribute('data-student');
-                    const date = document.getElementById('attendance-date').value;
-                    const notes = input.value;
-                    
-                    // Initialize date if it doesn't exist
-                    if (!attendance[date]) {
-                        attendance[date] = {};
-                    }
-                    
-                    // Get current status or default to 'hadir'
-                    let currentStatus = 'hadir';
-                    if (attendance[date][studentId]) {
-                        currentStatus = typeof attendance[date][studentId] === 'object' 
-                            ? attendance[date][studentId].status 
-                            : attendance[date][studentId];
-                    }
-                    
-                    // Update attendance with status and notes
-                    attendance[date][studentId] = {
-                        status: currentStatus,
-                        notes: notes
-                    };
-                });
-            });
-        }
-
-        // Attendance date change
-        document.getElementById('attendance-date').addEventListener('change', () => {
-            displayAttendance();
-        });
-
-        // Detail modal
-        const detailModal = document.getElementById('detail-modal');
-        
-        function openDetailModal(studentId, studentName, attendanceDetails) {
-            document.getElementById('detail-student-name').textContent = studentName;
-            const detailList = document.getElementById('detail-list');
-            detailList.innerHTML = '';
-            
-            // Count status totals
-            let hadirCount = 0, sakitCount = 0, ijinCount = 0, alphaCount = 0;
-            
-            // Sort dates in descending order (newest first)
-            const sortedDates = Object.keys(attendanceDetails).sort((a, b) => new Date(b) - new Date(a));
-            
-            sortedDates.forEach((date, index) => {
-                const attendanceData = attendanceDetails[date];
-                const status = typeof attendanceData === 'object' ? attendanceData.status : attendanceData;
-                const notes = typeof attendanceData === 'object' ? attendanceData.notes : '';
-                
-                // Update counts
-                if (status === 'hadir') hadirCount++;
-                else if (status === 'sakit') sakitCount++;
-                else if (status === 'ijin') ijinCount++;
-                else if (status === 'alpha') alphaCount++;
-                
-                const row = document.createElement('tr');
-                
-                // Set background color based on status
-                let statusClass = '';
-                let statusIcon = '';
-                
-                if (status === 'hadir') {
-                    statusClass = 'bg-green-100 text-green-800';
-                    statusIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>`;
-                } else if (status === 'sakit') {
-                    statusClass = 'bg-yellow-100 text-yellow-800';
-                    statusIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                    </svg>`;
-                } else if (status === 'ijin') {
-                    statusClass = 'bg-blue-100 text-blue-800';
-                    statusIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>`;
-                } else if (status === 'alpha') {
-                    statusClass = 'bg-red-100 text-red-800';
-                    statusIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>`;
+        // Show series detail page
+        function showSeriesDetail(id) {
+            // In a real app, you would fetch series data from the server
+            const seriesData = {
+                1: {
+                    title: 'Stranger Things',
+                    year: '2016-Present',
+                    genre: 'Sci-Fi, Horror',
+                    description: 'When a young boy disappears, his mother, a police chief, and his friends must confront terrifying supernatural forces in order to get him back.'
+                },
+                2: {
+                    title: 'Breaking Bad',
+                    year: '2008-2013',
+                    genre: 'Drama, Crime',
+                    description: 'A high school chemistry teacher diagnosed with inoperable lung cancer turns to manufacturing and selling methamphetamine in order to secure his family\'s future.'
+                },
+                3: {
+                    title: 'The Witcher',
+                    year: '2019-Present',
+                    genre: 'Fantasy, Action',
+                    description: 'Geralt of Rivia, a solitary monster hunter, struggles to find his place in a world where people often prove more wicked than beasts.'
+                },
+                4: {
+                    title: 'Money Heist',
+                    year: '2017-2021',
+                    genre: 'Crime, Thriller',
+                    description: 'A criminal mastermind who goes by "The Professor" has a plan to pull off the biggest heist in recorded history -- to print billions of euros in the Royal Mint of Spain.'
                 }
-                
-                row.innerHTML = `
-                    <td class="px-6 py-4">${index + 1}</td>
-                    <td class="px-6 py-4">${formatDateForDisplay(date)}</td>
-                    <td class="px-6 py-4">
-                        <span class="px-3 py-1 rounded-full ${statusClass}">
-                            ${statusIcon}
-                            ${status.charAt(0).toUpperCase() + status.slice(1)}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4">${notes || '-'}</td>
-                `;
-                
-                detailList.appendChild(row);
-            });
+            };
             
-            // Update summary counts
-            document.getElementById('detail-hadir').textContent = hadirCount;
-            document.getElementById('detail-sakit').textContent = sakitCount;
-            document.getElementById('detail-ijin').textContent = ijinCount;
-            document.getElementById('detail-alpha').textContent = alphaCount;
-            
-            detailModal.classList.remove('hidden');
+            if (seriesData[id]) {
+                const series = seriesData[id];
+                
+                // Update series details
+                document.getElementById('series-title').textContent = series.title;
+                document.getElementById('series-year').textContent = series.year;
+                document.getElementById('series-genre').textContent = series.genre;
+                document.getElementById('series-description').textContent = series.description;
+                document.getElementById('series-poster-title').textContent = series.title;
+                
+                // Show series detail page
+                document.getElementById('home-page').classList.add('hidden');
+                document.getElementById('series-detail').classList.remove('hidden');
+            }
         }
         
-        document.getElementById('close-detail-modal').addEventListener('click', () => {
-            detailModal.classList.add('hidden');
-        });
-        
-        document.getElementById('close-detail').addEventListener('click', () => {
-            detailModal.classList.add('hidden');
-        });
-
-        // Generate attendance report
-        document.getElementById('btn-generate-report').addEventListener('click', () => {
-            const startDate = new Date(document.getElementById('start-date').value);
-            const endDate = new Date(document.getElementById('end-date').value);
-            const reportTable = document.getElementById('report-data');
-            const reportSection = document.getElementById('attendance-report');
-            const noReportData = document.getElementById('no-report-data');
-            const reportDateRange = document.getElementById('report-date-range');
-            
-            // Validate dates
-            if (startDate > endDate) {
-                alert('Tanggal awal harus lebih awal dari tanggal akhir');
-                return;
-            }
-            
-            reportTable.innerHTML = '';
-            reportSection.classList.remove('hidden');
-            noReportData.classList.add('hidden');
-            
-            // Set date range display
-            reportDateRange.textContent = `${formatDateForDisplay(document.getElementById('start-date').value)} - ${formatDateForDisplay(document.getElementById('end-date').value)}`;
-            
-            // Generate report for each student
-            students.forEach((student, index) => {
-                let studentAttendanceDetails = {};
-                let hadir = 0, sakit = 0, ijin = 0, alpha = 0;
-                
-                // Loop through dates in range
-                for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-                    const dateStr = formatDateForInput(d);
-                    
-                    if (attendance[dateStr] && attendance[dateStr][student.id]) {
-                        const attendanceData = attendance[dateStr][student.id];
-                        const status = typeof attendanceData === 'object' ? attendanceData.status : attendanceData;
-                        
-                        studentAttendanceDetails[dateStr] = attendanceData;
-                        
-                        if (status === 'hadir') hadir++;
-                        else if (status === 'sakit') sakit++;
-                        else if (status === 'ijin') ijin++;
-                        else if (status === 'alpha') alpha++;
-                    }
+        // Show video player page
+        function showVideoPlayer(episodeId) {
+            // In a real app, you would fetch episode data and video URL from the server
+            const episodeData = {
+                1: {
+                    title: 'Pilot',
+                    info: 'Season 1, Episode 1',
+                    duration: '45m',
+                    description: 'The first episode where everything begins. A group of friends encounter something strange in the woods.'
+                },
+                2: {
+                    title: 'The Mystery Begins',
+                    info: 'Season 1, Episode 2',
+                    duration: '42m',
+                    description: 'The plot thickens as new characters are introduced and the mystery deepens.'
+                },
+                3: {
+                    title: 'Revelations',
+                    info: 'Season 1, Episode 3',
+                    duration: '47m',
+                    description: 'Shocking discoveries change everything for our heroes as they learn more about the strange occurrences.'
                 }
-                
-                // Create row
-                const row = document.createElement('tr');
-                row.className = 'student-row';
-                
-                row.innerHTML = `
-                    <td class="px-6 py-4">${index + 1}</td>
-                    <td class="px-6 py-4">${student.nis}</td>
-                    <td class="px-6 py-4 font-medium">${student.name}</td>
-                    <td class="px-6 py-4 text-center">
-                        <button class="view-detail bg-indigo-100 hover:bg-indigo-200 text-indigo-800 px-3 py-1 rounded-lg text-sm transition duration-300"
-                            data-student="${student.id}" data-name="${student.name}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                            Detail
-                        </button>
-                    </td>
-                `;
-                
-                reportTable.appendChild(row);
-                
-                // Add event listener to detail button
-                row.querySelector('.view-detail').addEventListener('click', () => {
-                    openDetailModal(student.id, student.name, studentAttendanceDetails);
-                });
-            });
-        });
-
-        // Export to Excel function
-        document.getElementById('btn-export-excel').addEventListener('click', () => {
-            const startDate = new Date(document.getElementById('start-date').value);
-            const endDate = new Date(document.getElementById('end-date').value);
+            };
             
-            // Validate dates
-            if (startDate > endDate) {
-                alert('Tanggal awal harus lebih awal dari tanggal akhir');
-                return;
+            if (episodeData[episodeId]) {
+                const episode = episodeData[episodeId];
+                
+                // Update episode details
+                document.getElementById('episode-title').textContent = episode.title;
+                document.getElementById('episode-info').textContent = episode.info;
+                document.getElementById('episode-duration').textContent = episode.duration;
+                document.getElementById('episode-description').textContent = episode.description;
+                
+                // Reset video player
+                const video = document.getElementById('main-video');
+                video.pause();
+                video.currentTime = 0;
+                document.getElementById('play-icon').classList.remove('fa-pause');
+                document.getElementById('play-icon').classList.add('fa-play');
+                
+                // In a real app, you would set the video source here
+                // video.src = episodeVideoUrl;
+                
+                // Show video player page
+                document.getElementById('series-detail').classList.add('hidden');
+                document.getElementById('video-player-page').classList.remove('hidden');
             }
-            
-            // Create a workbook
-            let csvContent = "data:text/csv;charset=utf-8,";
-            
-            // Get all dates in the range
-            const dates = [];
-            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-                dates.push(formatDateForInput(d));
-            }
-            
-            // Create headers with dates
-            const headers = ["No", "Nama Siswa"];
-            dates.forEach(date => {
-                headers.push(formatDateForShortDisplay(date));
-            });
-            
-            csvContent += headers.join(',') + "\r\n";
-            
-            // Add rows for each student
-            students.forEach((student, index) => {
-                const row = [
-                    index + 1,
-                    student.name
-                ];
-                
-                // Add status code for each date
-                dates.forEach(dateStr => {
-                    let statusCode = "-";
-                    
-                    if (attendance[dateStr] && attendance[dateStr][student.id]) {
-                        const attendanceData = attendance[dateStr][student.id];
-                        const status = typeof attendanceData === 'object' ? attendanceData.status : attendanceData;
-                        const notes = typeof attendanceData === 'object' ? attendanceData.notes : '';
-                        
-                        // Convert status to single letter code
-                        switch(status) {
-                            case 'hadir':
-                                statusCode = "H";
-                                break;
-                            case 'sakit':
-                                statusCode = "S";
-                                break;
-                            case 'ijin':
-                                statusCode = "I";
-                                break;
-                            case 'alpha':
-                                statusCode = "A";
-                                break;
-                        }
-                        
-                        // Add notes in parentheses if available
-                        if (notes) {
-                            statusCode += ` (${notes})`;
-                        }
-                    }
-                    
-                    row.push(statusCode);
-                });
-                
-                csvContent += row.join(',') + "\r\n";
-            });
-            
-            // Add summary row for each status type
-            csvContent += "\r\n";
-            csvContent += "Keterangan:,H = Hadir\r\n";
-            csvContent += ",S = Sakit\r\n";
-            csvContent += ",I = Ijin\r\n";
-            csvContent += ",A = Alpha\r\n";
-            
-            // Create a download link
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            
-            // Get date range for filename
-            const startDateStr = document.getElementById('start-date').value;
-            const endDateStr = document.getElementById('end-date').value;
-            link.setAttribute("download", `rekap_kehadiran_${startDateStr}_${endDateStr}.csv`);
-            
-            // Append to body and trigger download
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        });
-
-        // Initialize displays
-        displayStudents();
-        
-        // Initialize some sample attendance data
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = formatDateForInput(yesterday);
-        
-        const twoDaysAgo = new Date();
-        twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-        const twoDaysAgoStr = formatDateForInput(twoDaysAgo);
-        
-        const threeDaysAgo = new Date();
-        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-        const threeDaysAgoStr = formatDateForInput(threeDaysAgo);
-        
-        const fourDaysAgo = new Date();
-        fourDaysAgo.setDate(fourDaysAgo.getDate() - 4);
-        const fourDaysAgoStr = formatDateForInput(fourDaysAgo);
-        
-        // Sample attendance data with notes
-        attendance[yesterdayStr] = {
-            1: { status: 'hadir', notes: 'Tepat waktu' },
-            2: { status: 'hadir', notes: '' },
-            3: { status: 'sakit', notes: 'Demam' },
-            4: { status: 'ijin', notes: 'Acara keluarga' },
-            5: { status: 'hadir', notes: '' }
-        };
-        
-        attendance[formatDateForInput(today)] = {
-            1: { status: 'hadir', notes: '' },
-            2: { status: 'alpha', notes: 'Tidak ada keterangan' },
-            3: { status: 'hadir', notes: '' },
-            4: { status: 'hadir', notes: '' },
-            5: { status: 'ijin', notes: 'Sakit gigi' }
-        };
-        
-        attendance[twoDaysAgoStr] = {
-            1: { status: 'hadir', notes: '' },
-            2: { status: 'hadir', notes: '' },
-            3: { status: 'hadir', notes: '' },
-            4: { status: 'alpha', notes: 'Tidak ada keterangan' },
-            5: { status: 'sakit', notes: 'Flu' }
-        };
-        
-        attendance[threeDaysAgoStr] = {
-            1: { status: 'ijin', notes: 'Kontrol ke dokter' },
-            2: { status: 'hadir', notes: '' },
-            3: { status: 'hadir', notes: '' },
-            4: { status: 'hadir', notes: '' },
-            5: { status: 'hadir', notes: '' }
-        };
-        
-        attendance[fourDaysAgoStr] = {
-            1: { status: 'hadir', notes: '' },
-            2: { status: 'sakit', notes: 'Sakit perut' },
-            3: { status: 'alpha', notes: 'Tidak ada keterangan' },
-            4: { status: 'hadir', notes: '' },
-            5: { status: 'hadir', notes: '' }
-        };
+        }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9631347fb013cdfa',t:'MTc1MzE2OTEzNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96586b062317fd85',t:'MTc1MzU4MDMxNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
